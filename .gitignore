@@ -8,7 +8,7 @@ target/
 *.log
 
 # debug files
-debug/
+/debug/
 
 # .idea files
 .idea/
