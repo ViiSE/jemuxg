@@ -48,24 +48,24 @@ public final class Frontend {
     private volatile boolean debugCaptureRequested;
     private long frameIndex;
 
-    public static void launch(Path romPath) {
+    public static void launch(Path romPath, String consoleId) {
         SwingUtilities.invokeLater(() -> {
             try {
-                new Frontend(romPath).show();
+                new Frontend(romPath, consoleId).show();
             } catch (Exception e) {
                 showError(e);
             }
         });
     }
 
-    private Frontend(Path romPath) throws IOException {
+    private Frontend(Path romPath, String consoleId) throws IOException {
         if (!Files.isRegularFile(romPath) || !Files.isReadable(romPath)) {
             throw new IOException("ROM не найден или недоступен: " + romPath);
         }
 
         media = FileMedia.open(romPath, MediaKind.CARTRIDGE);
         Console console = ConsoleRegistry.load()
-                .require("nes")
+                .require(consoleId)
                 .create(ConsoleConfig.empty());
         machine = console.machine();
         debugger = console.debugger().orElse(null);

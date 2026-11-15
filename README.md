@@ -1,6 +1,6 @@
 # jemuxg
 
-Эмулятор старых консолей. Сейчас реализована NES.
+Эмулятор старых консолей. Реализованы NES и каркас Atari 2600.
 
 ## Сборка
 
@@ -18,12 +18,20 @@ JAVA_HOME=/path/to/temurin-25 mvn clean package
 java -cp target/classes ru.viise.jemuxg.app.Main
 ```
 
-Можно передать ROM сразу:
+Можно передать ROM сразу. Консоль определяется по расширению:
+`.nes` → NES, `.a26` → Atari 2600.
 
 ```bash
 java -cp target/classes ru.viise.jemuxg.app.Main game.nes
+java -cp target/classes ru.viise.jemuxg.app.Main game.a26
 # или
 java -cp target/classes ru.viise.jemuxg.app.Main --rom game.nes
+```
+
+Для неоднозначных файлов консоль можно указать явно:
+
+```bash
+java -cp target/classes ru.viise.jemuxg.app.Main --console atari2600 game.bin
 ```
 
 Проверка без окна (headless):
@@ -34,7 +42,7 @@ java -Djava.awt.headless=true -cp target/classes ru.viise.jemuxg.app.Main --smok
 
 ## Управление
 
-| Клавиша | Кнопка NES |
+| Клавиша | Кнопка |
 | --- | --- |
 | Стрелки | Крестовина |
 | Z / A / Space | A |

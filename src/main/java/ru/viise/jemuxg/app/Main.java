@@ -4,6 +4,7 @@ import java.awt.GraphicsEnvironment;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.Locale;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import ru.viise.jemuxg.api.console.Console;
@@ -16,7 +17,8 @@ import ru.viise.jemuxg.platform.video.HeadlessVideoSink;
  * Точка входа.
  * <p>
  * Без аргументов открывает выбор ROM и запускает Swing-фронтенд.
- * С {@code --smoke} (или в headless-режиме) прогоняет один кадр NES без окна.
+ * С {@code --smoke} (или в headless-режиме) прогоняет по одному кадру
+ * каждой зарегистрированной консоли без окна.
  */
 public final class Main {
 
@@ -37,43 +39,96 @@ public final class Main {
             return;
         }
 
-        Path rom;
+        LaunchRequest request;
         try {
-            rom = parseRomPath(args);
+            request = parseRequest(args);
         } catch (InvalidPathException e) {
             System.err.println("Некорректный путь: " + e.getMessage());
             usage();
             return;
         }
+        if (request == null) {
+            return;
+        }
 
-        if (rom == null && args.length == 0) {
+        Path rom = request.rom();
+        if (rom == null) {
             rom = chooseRom();
         }
         if (rom == null) {
             return;
         }
 
-        Frontend.launch(rom);
+        ConsoleRegistry registry = ConsoleRegistry.load();
+        String consoleId;
+        try {
+            consoleId = request.consoleId() != null
+                    ? registry.require(request.consoleId()).info().id()
+                    : consoleFor(rom);
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+            if (request.consoleId() == null) {
+                System.err.println("Укажите консоль явно: --console <id>");
+                System.err.println("Доступные консоли: " + registry.all().stream()
+                        .map(provider -> provider.info().id())
+                        .sorted()
+                        .toList());
+            }
+            return;
+        }
+
+        Frontend.launch(rom, consoleId);
     }
 
-    private static Path parseRomPath(String[] args) {
-        if (args.length == 0) {
-            return null;
+    private static LaunchRequest parseRequest(String[] args) {
+        String consoleId = null;
+        Path rom = null;
+
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if ("--console".equals(arg)) {
+                if (++i >= args.length) {
+                    usage();
+                    return null;
+                }
+                consoleId = args[i];
+                continue;
+            }
+            if ("--rom".equals(arg)) {
+                if (++i >= args.length || rom != null) {
+                    usage();
+                    return null;
+                }
+                rom = Path.of(args[i]);
+                continue;
+            }
+            if (arg.startsWith("--") || rom != null) {
+                usage();
+                return null;
+            }
+            rom = Path.of(arg);
         }
-        if (args.length == 1 && !args[0].startsWith("--")) {
-            return Path.of(args[0]);
+
+        return new LaunchRequest(rom, consoleId);
+    }
+
+    private static String consoleFor(Path rom) {
+        String name = rom.getFileName().toString().toLowerCase(Locale.ROOT);
+        if (name.endsWith(".nes")) {
+            return "nes";
         }
-        if (args.length == 2 && "--rom".equals(args[0])) {
-            return Path.of(args[1]);
+        if (name.endsWith(".a26")) {
+            return "atari2600";
         }
-        usage();
-        return null;
+        throw new IllegalArgumentException(
+                "Не удалось определить консоль по расширению файла: " + rom.getFileName());
     }
 
     private static Path chooseRom() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Выберите NES ROM");
-        chooser.setFileFilter(new FileNameExtensionFilter("NES ROM (*.nes)", "nes"));
+        chooser.setDialogTitle("Выберите ROM");
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                "ROM (*.nes, *.a26)", "nes", "a26"));
         if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
             return null;
         }
@@ -83,10 +138,17 @@ public final class Main {
     private static void usage() {
         System.out.println("""
                 Использование:
-                  java -cp target/classes ru.viise.jemuxg.app.Main [rom.nes]
-                  java -cp target/classes ru.viise.jemuxg.app.Main --rom rom.nes
+                  java -cp target/classes ru.viise.jemuxg.app.Main [rom.nes|rom.a26]
+                  java -cp target/classes ru.viise.jemuxg.app.Main --rom <rom> [--console <id>]
+                  java -cp target/classes ru.viise.jemuxg.app.Main --console <id> <rom>
                   java -cp target/classes ru.viise.jemuxg.app.Main --smoke
+
+                Консоль определяется по расширению: .nes -> nes, .a26 -> atari2600.
+                Для неоднозначных файлов используйте --console <id>.
                 """);
+    }
+
+    private record LaunchRequest(Path rom, String consoleId) {
     }
 
     private static void smoke() {
@@ -100,15 +162,20 @@ public final class Main {
                         provider.info().name(),
                         provider.info().supportedMedia()));
 
-        Console console = registry.require("nes").create(ConsoleConfig.empty());
-        HeadlessVideoSink video = new HeadlessVideoSink();
-        SilentAudioSink audio = new SilentAudioSink();
+        registry.all().stream()
+                .sorted(Comparator.comparing(provider -> provider.info().id()))
+                .forEach(provider -> {
+                    Console console = provider.create(ConsoleConfig.empty());
+                    HeadlessVideoSink video = new HeadlessVideoSink();
+                    SilentAudioSink audio = new SilentAudioSink();
 
-        console.machine().connectVideo(video);
-        console.machine().connectAudio(audio);
-        console.machine().reset();
-        console.machine().runFrame();
+                    console.machine().connectVideo(video);
+                    console.machine().connectAudio(audio);
+                    console.machine().reset();
+                    console.machine().runFrame();
 
-        System.out.printf("nes smoke: frames=%d, samples=%d%n", video.frames(), audio.samples());
+                    System.out.printf("%s smoke: frames=%d, samples=%d%n",
+                            provider.info().id(), video.frames(), audio.samples());
+                });
     }
 }
