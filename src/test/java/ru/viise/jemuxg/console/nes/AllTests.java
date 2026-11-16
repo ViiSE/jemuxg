@@ -6,6 +6,7 @@ import ru.viise.jemuxg.console.atari2600.AtariCartridgeTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotPortsTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotRamTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotTimerTests;
+import ru.viise.jemuxg.console.atari2600.AtariTiaTests;
 
 /**
  * Запуск всех контрактных тестов и тестовых ROM одной командой.
@@ -27,6 +28,7 @@ public final class AllTests {
         AtariRiotRamTests.main(args);
         AtariRiotTimerTests.main(args);
         AtariRiotPortsTests.main(args);
+        AtariTiaTests.main(args);
         System.out.println("All jemuxg tests OK");
     }
 }

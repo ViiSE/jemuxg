@@ -1,20 +1,20 @@
 package ru.viise.jemuxg.console.atari2600;
 
-import java.util.Arrays;
 import java.util.List;
 import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.api.hardware.Controller;
-import ru.viise.jemuxg.api.hardware.VideoFrame;
 import ru.viise.jemuxg.api.hardware.VideoSink;
 import ru.viise.jemuxg.api.machine.Machine;
 import ru.viise.jemuxg.api.storage.Media;
 import ru.viise.jemuxg.api.storage.StorageSlot;
+import ru.viise.jemuxg.hardware.video.tia.Tia;
+import ru.viise.jemuxg.hardware.video.tia.TiaVideo;
 
 /**
  * Сборка Atari 2600.
  *
- * <p>Сейчас это каркас этапа 1: провайдер, консоль, слот и пустой кадр.
- * TIA, RIOT и 6507 подключаются на следующих этапах.</p>
+ * <p>Сейчас подключён каркас TIA: развёртка и кадр 160×192. CPU, RIOT и
+ * картридж будут связаны с шиной на следующих этапах.</p>
  */
 public final class Atari2600Machine implements Machine {
 
@@ -23,34 +23,27 @@ public final class Atari2600Machine implements Machine {
     private final Atari2600CartridgeSlot cartridgeSlot = new Atari2600CartridgeSlot();
     private final List<StorageSlot> slots = List.of(cartridgeSlot);
     private final Controller[] controllers = new Controller[CONTROLLER_PORTS];
-    private final int[] pixels = new int[
-            Atari2600Constants.VISIBLE_WIDTH * Atari2600Constants.VISIBLE_HEIGHT];
+    private final TiaVideo tia = new Tia();
 
-    private VideoSink videoSink;
     private AudioSink audioSink;
 
     public Atari2600Machine() {
-        Arrays.fill(pixels, 0xFF000000);
+        tia.reset();
     }
 
     @Override
     public void reset() {
-        // Состояние TIA/RIOT/6507 появится вместе с их реализацией.
+        tia.reset();
     }
 
     @Override
     public void runFrame() {
-        if (videoSink != null) {
-            videoSink.frameReady(new VideoFrame(
-                    Atari2600Constants.VISIBLE_WIDTH,
-                    Atari2600Constants.VISIBLE_HEIGHT,
-                    pixels));
-        }
+        tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
     }
 
     @Override
     public void connectVideo(VideoSink sink) {
-        videoSink = sink;
+        tia.connect(sink);
     }
 
     @Override
@@ -92,5 +85,9 @@ public final class Atari2600Machine implements Machine {
 
     public List<StorageSlot> slots() {
         return slots;
+    }
+
+    public TiaVideo tia() {
+        return tia;
     }
 }

@@ -26,4 +26,9 @@ public interface TiaVideo extends VideoProcessor {
      * @return текущий цветовой такт внутри строки
      */
     int colorClock();
+
+    /**
+     * @return остановлен ли CPU записью в WSYNC до конца текущей строки
+     */
+    boolean cpuHalted();
 }
