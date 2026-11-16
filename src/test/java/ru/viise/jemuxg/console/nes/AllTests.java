@@ -3,6 +3,7 @@ package ru.viise.jemuxg.console.nes;
 import ru.viise.jemuxg.console.atari2600.Atari2600BusTests;
 import ru.viise.jemuxg.console.atari2600.Atari6507Tests;
 import ru.viise.jemuxg.console.atari2600.AtariCartridgeTests;
+import ru.viise.jemuxg.console.atari2600.AtariRiotRamTests;
 
 /**
  * Запуск всех контрактных тестов и тестовых ROM одной командой.
@@ -21,6 +22,7 @@ public final class AllTests {
         Atari6507Tests.main(args);
         Atari2600BusTests.main(args);
         AtariCartridgeTests.main(args);
+        AtariRiotRamTests.main(args);
         System.out.println("All jemuxg tests OK");
     }
 }
