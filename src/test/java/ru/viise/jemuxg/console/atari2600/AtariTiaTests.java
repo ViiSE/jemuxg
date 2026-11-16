@@ -7,6 +7,7 @@ import ru.viise.jemuxg.api.hardware.VideoFrame;
 import ru.viise.jemuxg.core.state.BinaryStateReader;
 import ru.viise.jemuxg.core.state.BinaryStateWriter;
 import ru.viise.jemuxg.hardware.video.tia.Tia;
+import ru.viise.jemuxg.hardware.video.tia.TiaPalette;
 
 /**
  * Тесты каркаса развёртки TIA.
@@ -17,6 +18,8 @@ public final class AtariTiaTests {
 
     public static void main(String[] args) {
         initialState();
+        paletteTable();
+        indexFramebuffer();
         lineBoundary();
         frameDelivery();
         wsyncStopsCpu();
@@ -37,6 +40,43 @@ public final class AtariTiaTests {
         check(!tia.cpuHalted(), "TIA starts not halted");
         check(tia.frameCount() == 0, "TIA starts at frame 0");
         check("TIA".equals(tia.name()), "TIA name");
+    }
+
+    private static void paletteTable() {
+        check(TiaPalette.size() == 128, "TIA palette has 128 colors");
+        check(TiaPalette.ARGB[0x00] == 0xFF000000, "TIA palette 0x00 black");
+        check(TiaPalette.ARGB[0x07] == 0xFFECECEC, "TIA palette 0x07 white");
+        check(TiaPalette.ARGB[0x08] == 0xFF484800, "TIA palette 0x08 yellow");
+        check(TiaPalette.ARGB[0x0F] == 0xFFFCFC54, "TIA palette 0x0F bright yellow");
+        check(TiaPalette.ARGB[0x20] == 0xFF940000, "TIA palette 0x20 red");
+        check(TiaPalette.ARGB[0x27] == 0xFFFC9090, "TIA palette 0x27 bright red");
+        check(TiaPalette.ARGB[0x40] == 0xFF000094, "TIA palette 0x40 blue");
+        check(TiaPalette.ARGB[0x7F] == 0xFFFCE070, "TIA palette 0x7F light brown");
+
+        boolean alpha = true;
+        for (int color : TiaPalette.ARGB) {
+            alpha &= (color >>> 24) == 0xFF;
+        }
+        check(alpha, "TIA palette colors are opaque");
+    }
+
+    private static void indexFramebuffer() {
+        Tia tia = new Tia();
+        byte[] indices = tia.framebufferIndices();
+        check(indices.length == Atari2600Constants.VISIBLE_WIDTH
+                * Atari2600Constants.VISIBLE_HEIGHT, "TIA index framebuffer size");
+
+        boolean zero = true;
+        for (byte index : indices) {
+            zero &= index == 0;
+        }
+        check(zero, "TIA index framebuffer starts at color 0");
+        check(tia.framebufferArgb()[0] == TiaPalette.ARGB[0],
+                "TIA framebuffer starts with palette color 0");
+
+        indices[0] = 127;
+        check(tia.framebufferIndices()[0] == 0,
+                "TIA index framebuffer returns a copy");
     }
 
     private static void lineBoundary() {
