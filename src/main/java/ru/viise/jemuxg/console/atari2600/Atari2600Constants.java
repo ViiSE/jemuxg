@@ -100,6 +100,12 @@ public final class Atari2600Constants {
     /** Количество адресов в блоке TIA. */
     public static final int TIA_REGISTER_COUNT = TIA_END - TIA_BASE + 1;
 
+    /** Маска адреса внутри блока TIA (регистры занимают 64 байта). */
+    public static final int TIA_ADDRESS_MASK = TIA_REGISTER_COUNT - 1;
+
+    /** Конец второго (зеркального) окна TIA. */
+    public static final int TIA_MIRROR_END = TIA_END + TIA_REGISTER_COUNT;
+
     /** Начало встроенной RAM RIOT. */
     public static final int RIOT_RAM_BASE = 0x0080;
 
@@ -109,11 +115,17 @@ public final class Atari2600Constants {
     /** Размер встроенной RAM RIOT. */
     public static final int RIOT_RAM_SIZE = RIOT_RAM_END - RIOT_RAM_BASE + 1;
 
+    /** Маска смещения внутри RAM RIOT. */
+    public static final int RIOT_RAM_OFFSET_MASK = RIOT_RAM_SIZE - 1;
+
     /** Начало регистров RIOT 6532. */
     public static final int RIOT_BASE = 0x0280;
 
     /** Конец регистров RIOT 6532. */
     public static final int RIOT_END = 0x029F;
+
+    /** Количество регистров RIOT 6532. */
+    public static final int RIOT_REGISTER_COUNT = RIOT_END - RIOT_BASE + 1;
 
     /** Начало адресного пространства картриджа. */
     public static final int CARTRIDGE_BASE = 0x1000;
@@ -124,6 +136,9 @@ public final class Atari2600Constants {
     /** Размер адресного окна картриджа (4 КБ). */
     public static final int CARTRIDGE_WINDOW_SIZE =
             CARTRIDGE_END - CARTRIDGE_BASE + 1;
+
+    /** Маска смещения внутри окна картриджа. */
+    public static final int CARTRIDGE_OFFSET_MASK = CARTRIDGE_WINDOW_SIZE - 1;
 
     /** Вектор сброса внутри окна картриджа. */
     public static final int CARTRIDGE_RESET_VECTOR = 0x1FFC;
