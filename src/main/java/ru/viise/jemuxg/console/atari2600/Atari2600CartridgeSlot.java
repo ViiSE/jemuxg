@@ -6,18 +6,18 @@ import ru.viise.jemuxg.api.storage.Media;
 import ru.viise.jemuxg.api.storage.MediaKind;
 import ru.viise.jemuxg.api.storage.Storage;
 import ru.viise.jemuxg.api.storage.StorageSlot;
+import ru.viise.jemuxg.console.atari2600.cartridge.AtariCartridge;
 
 /**
  * Слот картриджа Atari 2600.
  *
- * <p>Пока это каркас: картридж хранится как носитель, а окно
- * {@code $1000..$1FFF} отвечает {@code 0xFF}. Разбор 2K/4K и банковских
- * схем появится в этапе 6.</p>
+ * <p>Принимает только {@link MediaKind#CARTRIDGE}. Поддерживаются
+ * фиксированные картриджи 2 КБ и 4 КБ; банковские схемы появятся
+ * на этапе 6. Пустой слот читается как {@code 0xFF}, запись игнорируется.</p>
  */
 public final class Atari2600CartridgeSlot implements StorageSlot, Bus {
 
-    private Media media;
-    private Storage storage;
+    private AtariCartridge cartridge;
 
     @Override
     public String id() {
@@ -26,48 +26,42 @@ public final class Atari2600CartridgeSlot implements StorageSlot, Bus {
 
     @Override
     public boolean isPresent() {
-        return media != null;
+        return cartridge != null;
     }
 
     @Override
     public Optional<Storage> storage() {
-        return Optional.ofNullable(storage);
+        return Optional.ofNullable(cartridge);
     }
 
     @Override
     public void insert(Media media) {
-        if (media == null) {
-            throw new IllegalArgumentException("media must not be null");
-        }
-        if (media.kind() != MediaKind.CARTRIDGE) {
-            throw new IllegalArgumentException(
-                    "Atari 2600 accepts cartridge media, got " + media.kind());
-        }
-        this.media = media;
-        this.storage = new SlotStorage(media, this);
+        cartridge = new AtariCartridge(media);
     }
 
     @Override
     public Media eject() {
-        if (media == null) {
+        if (cartridge == null) {
             return null;
         }
-        Media ejected = media;
-        media = null;
-        storage = null;
+        Media ejected = cartridge.media();
+        cartridge = null;
         return ejected;
     }
 
     @Override
     public int read(int address) {
-        return 0xFF;
+        return cartridge == null ? 0xFF : cartridge.read(address);
     }
 
     @Override
     public void write(int address, int value) {
-        // Банковские регистры появятся вместе с мапперами в этапе 6.
+        if (cartridge != null) {
+            cartridge.write(address, value);
+        }
     }
 
-    private record SlotStorage(Media media, Bus bus) implements Storage {
+    public AtariCartridge cartridge() {
+        return cartridge;
     }
 }

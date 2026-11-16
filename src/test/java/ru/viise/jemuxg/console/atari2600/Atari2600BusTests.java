@@ -77,15 +77,15 @@ public final class Atari2600BusTests {
         Atari2600Bus bus = newBus(new ProbeBus(), new Ram(128), new ProbeBus(), cartridge);
 
         cartridge.readValue = 0x88;
-        check(bus.read(0x1000) == 0x88 && cartridge.lastRead == 0x000,
-                "cartridge read at $1000 maps to offset 0");
+        check(bus.read(0x1000) == 0x88 && cartridge.lastRead == 0x1000,
+                "cartridge read at $1000 gets absolute address");
         cartridge.readValue = 0x99;
-        check(bus.read(0x1FFF) == 0x99 && cartridge.lastRead == 0xFFF,
-                "cartridge read at $1FFF maps to offset $FFF");
+        check(bus.read(0x1FFF) == 0x99 && cartridge.lastRead == 0x1FFF,
+                "cartridge read at $1FFF gets absolute address");
 
         bus.write(0x1ABC, 0xAA);
-        check(cartridge.lastWriteAddress == 0xABC && cartridge.lastWriteValue == 0xAA,
-                "cartridge write at $1ABC maps to offset $ABC");
+        check(cartridge.lastWriteAddress == 0x1ABC && cartridge.lastWriteValue == 0xAA,
+                "cartridge write at $1ABC gets absolute address");
     }
 
     private static void unmappedAddresses() {
@@ -116,7 +116,7 @@ public final class Atari2600BusTests {
                 "13-bit mask: $2000 maps to TIA $0000");
 
         cartridge.readValue = 0x6B;
-        check(bus.read(0xFFFF) == 0x6B && cartridge.lastRead == 0xFFF,
+        check(bus.read(0xFFFF) == 0x6B && cartridge.lastRead == 0x1FFF,
                 "13-bit mask: $FFFF maps to cartridge $1FFF");
 
         bus.write(0x2000, 0x7C);

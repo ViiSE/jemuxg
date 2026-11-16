@@ -50,7 +50,8 @@ public final class Atari2600Bus implements Bus {
             return riotRegisters.read(address13 - Atari2600Constants.RIOT_BASE);
         }
         if (address13 >= Atari2600Constants.CARTRIDGE_BASE) {
-            return cartridge.read(address13 & Atari2600Constants.CARTRIDGE_OFFSET_MASK);
+            // Картридж получает абсолютный адрес окна: $1000..$1FFF.
+            return cartridge.read(address13);
         }
         return UNMAPPED_READ;
     }
@@ -74,7 +75,7 @@ public final class Atari2600Bus implements Bus {
             return;
         }
         if (address13 >= Atari2600Constants.CARTRIDGE_BASE) {
-            cartridge.write(address13 & Atari2600Constants.CARTRIDGE_OFFSET_MASK, value);
+            cartridge.write(address13, value);
         }
     }
 }
