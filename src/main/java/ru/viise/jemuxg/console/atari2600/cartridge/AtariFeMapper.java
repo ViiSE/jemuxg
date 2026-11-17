@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
@@ -64,6 +66,26 @@ public final class AtariFeMapper implements AtariMapper {
     @Override
     public String debugState() {
         return "bank=" + bank + " lastAccessWasFe=" + lastAccessWasFe;
+    }
+
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeByte(bank);
+        writer.writeByte(lastAccessWasFe ? 1 : 0);
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        int savedBank = reader.readByte();
+        int savedLatch = reader.readByte();
+        if (savedBank >= BANK_COUNT) {
+            throw new IllegalArgumentException("invalid FE bank in save state: " + savedBank);
+        }
+        if (savedLatch > 1) {
+            throw new IllegalArgumentException("invalid FE latch in save state: " + savedLatch);
+        }
+        bank = savedBank;
+        lastAccessWasFe = savedLatch != 0;
     }
 
     private static boolean inWindow(int address) {

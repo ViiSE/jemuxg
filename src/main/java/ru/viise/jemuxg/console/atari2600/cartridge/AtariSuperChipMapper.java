@@ -1,5 +1,8 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
+
 /**
  * SuperChip: банковый маппер F8/F6/F4 плюс 128 байт RAM.
  *
@@ -73,6 +76,23 @@ public final class AtariSuperChipMapper implements AtariMapper {
     @Override
     public String debugState() {
         return base.debugState() + " superChipRam=" + ram.length;
+    }
+
+    @Override
+    public void save(StateWriter writer) {
+        base.save(writer);
+        writer.writeBytes(ram.clone());
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        base.restore(reader);
+        byte[] savedRam = reader.readBytes();
+        if (savedRam.length != ram.length) {
+            throw new IllegalArgumentException(
+                    "invalid SuperChip RAM length in save state: " + savedRam.length);
+        }
+        System.arraycopy(savedRam, 0, ram, 0, ram.length);
     }
 
     private static boolean isRamWindow(int address) {

@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
@@ -48,6 +50,20 @@ public final class Atari3FMapper implements AtariMapper {
     @Override
     public int bankCount() {
         return bankCount;
+    }
+
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeByte(bank);
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        int value = reader.readByte();
+        if (value >= bankCount) {
+            throw new IllegalArgumentException("invalid 3F bank in save state: " + value);
+        }
+        bank = value;
     }
 
     private static boolean inWindow(int address) {

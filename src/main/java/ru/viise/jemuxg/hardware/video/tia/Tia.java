@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.hardware.video.tia;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import ru.viise.jemuxg.api.debug.StateReader;
 import ru.viise.jemuxg.api.debug.StateWriter;
@@ -922,6 +924,8 @@ public final class Tia implements TiaVideo {
         writer.writeShort(colorClock);
         writer.writeByte(wsync ? 1 : 0);
         writer.writeLong(frameCount);
+        writer.writeBytes(argbToBytes(pixels));
+        writer.writeBytes(pixelIndices.clone());
         audio.save(writer);
     }
 
@@ -976,6 +980,30 @@ public final class Tia implements TiaVideo {
         colorClock = reader.readShort();
         wsync = reader.readByte() != 0;
         frameCount = reader.readLong();
+        restoreFramebuffer(reader.readBytes(), reader.readBytes());
         audio.restore(reader);
+    }
+
+    private static byte[] argbToBytes(int[] values) {
+        ByteBuffer buffer = ByteBuffer.allocate(values.length * Integer.BYTES)
+                .order(ByteOrder.LITTLE_ENDIAN);
+        buffer.asIntBuffer().put(values);
+        return buffer.array();
+    }
+
+    private void restoreFramebuffer(byte[] argbBytes, byte[] indexBytes) {
+        if (argbBytes.length != pixels.length * Integer.BYTES) {
+            throw new IllegalArgumentException(
+                    "invalid TIA framebuffer length: " + argbBytes.length);
+        }
+        if (indexBytes.length != pixelIndices.length) {
+            throw new IllegalArgumentException(
+                    "invalid TIA palette-index framebuffer length: " + indexBytes.length);
+        }
+        ByteBuffer.wrap(argbBytes)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .asIntBuffer()
+                .get(pixels);
+        System.arraycopy(indexBytes, 0, pixelIndices, 0, pixelIndices.length);
     }
 }

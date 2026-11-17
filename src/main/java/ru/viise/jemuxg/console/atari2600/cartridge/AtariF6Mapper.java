@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
@@ -60,6 +62,20 @@ public final class AtariF6Mapper implements AtariMapper {
     @Override
     public int bankCount() {
         return BANK_COUNT;
+    }
+
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeByte(bank);
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        int value = reader.readByte();
+        if (value >= BANK_COUNT) {
+            throw new IllegalArgumentException("invalid F6 bank in save state: " + value);
+        }
+        bank = value;
     }
 
     private static boolean inWindow(int address) {

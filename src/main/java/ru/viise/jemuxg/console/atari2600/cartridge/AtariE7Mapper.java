@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
@@ -130,6 +132,32 @@ public final class AtariE7Mapper implements AtariMapper {
     @Override
     public String debugState() {
         return "lowerBank=" + lowerBank + " ramBank=" + ramBank;
+    }
+
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeByte(lowerBank);
+        writer.writeByte(ramBank);
+        writer.writeBytes(ram.clone());
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        int savedLowerBank = reader.readByte();
+        int savedRamBank = reader.readByte();
+        byte[] savedRam = reader.readBytes();
+        if (savedLowerBank >= romBankCount) {
+            throw new IllegalArgumentException("invalid E7 bank in save state: " + savedLowerBank);
+        }
+        if (savedRamBank >= 4) {
+            throw new IllegalArgumentException("invalid E7 RAM block in save state: " + savedRamBank);
+        }
+        if (savedRam.length != ram.length) {
+            throw new IllegalArgumentException("invalid E7 RAM length in save state: " + savedRam.length);
+        }
+        lowerBank = savedLowerBank;
+        ramBank = savedRamBank;
+        System.arraycopy(savedRam, 0, ram, 0, ram.length);
     }
 
     private static int cartridgeOffset(int address) {

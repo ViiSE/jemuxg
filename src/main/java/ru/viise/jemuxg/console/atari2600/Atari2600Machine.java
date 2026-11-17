@@ -1,6 +1,9 @@
 package ru.viise.jemuxg.console.atari2600;
 
 import java.util.List;
+import ru.viise.jemuxg.api.Stateful;
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.api.hardware.Controller;
 import ru.viise.jemuxg.api.hardware.SwitchPanel;
@@ -23,9 +26,11 @@ import ru.viise.jemuxg.hardware.video.tia.TiaVideo;
  * CPU TIA получает три цветовых такта, RIOT — один такт CPU. WSYNC
  * останавливает CPU до конца текущей строки.</p>
  */
-public final class Atari2600Machine implements Machine {
+public final class Atari2600Machine implements Machine, Stateful {
 
     private static final int CONTROLLER_PORTS = 2;
+    private static final int STATE_MAGIC = 0x4A4D5831;
+    private static final int STATE_VERSION = 1;
 
     private final Atari2600CartridgeSlot cartridgeSlot;
     private final List<StorageSlot> slots;
@@ -59,12 +64,71 @@ public final class Atari2600Machine implements Machine {
 
     @Override
     public void runFrame() {
-        for (int i = 0; i < Atari2600Constants.CPU_CYCLES_PER_FRAME; i++) {
+        runCycles(Atari2600Constants.CPU_CYCLES_PER_FRAME);
+    }
+
+    /**
+     * Выполняет заданное число тактов CPU. Полезно для пошаговой отладки
+     * и сохранения состояния посреди кадра.
+     */
+    public void runCycles(int cpuCycles) {
+        if (cpuCycles < 0) {
+            throw new IllegalArgumentException("cpuCycles must be non-negative: " + cpuCycles);
+        }
+        for (int i = 0; i < cpuCycles; i++) {
             if (!tia.cpuHalted() && cartridgeSlot.isPresent()) {
                 cpu.tick(1);
             }
             riot.tick(1);
             tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_CPU_CYCLE);
+        }
+    }
+
+    /**
+     * Сохраняет полное состояние машины: CPU, RIOT, TIA (включая звук и
+     * framebuffer) и картридж/маппер. Подключения контроллеров и панели
+     * остаются внешними и не сериализуются.
+     */
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeInt(STATE_MAGIC);
+        writer.writeByte(STATE_VERSION);
+        cpu.save(writer);
+        riot.save(writer);
+        tia.save(writer);
+
+        AtariCartridge cartridge = cartridgeSlot.cartridge();
+        writer.writeByte(cartridge == null ? 0 : 1);
+        if (cartridge != null) {
+            cartridge.save(writer);
+        }
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        if (reader.readInt() != STATE_MAGIC) {
+            throw new IllegalArgumentException("invalid Atari 2600 save state");
+        }
+        int version = reader.readByte();
+        if (version != STATE_VERSION) {
+            throw new IllegalArgumentException("unsupported Atari 2600 save state version: " + version);
+        }
+        cpu.restore(reader);
+        riot.restore(reader);
+        tia.restore(reader);
+
+        int present = reader.readByte();
+        if (present != 0 && present != 1) {
+            throw new IllegalArgumentException("invalid cartridge flag in save state: " + present);
+        }
+        AtariCartridge cartridge = cartridgeSlot.cartridge();
+        if (present == 1) {
+            if (cartridge == null) {
+                throw new IllegalStateException("save state requires a cartridge");
+            }
+            cartridge.restore(reader);
+        } else if (cartridge != null) {
+            throw new IllegalStateException("save state was captured without a cartridge");
         }
     }
 

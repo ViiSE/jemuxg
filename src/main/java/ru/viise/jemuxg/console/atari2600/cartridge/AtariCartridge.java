@@ -1,6 +1,10 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import ru.viise.jemuxg.api.Stateful;
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.storage.Cartridge;
 import ru.viise.jemuxg.api.storage.Media;
@@ -17,7 +21,7 @@ import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
  * автоматически берётся из зеркала {@code $1FFC..$1FFD}, а для банковых
  * схем — из текущего банка.</p>
  */
-public final class AtariCartridge implements Cartridge, Bus {
+public final class AtariCartridge implements Cartridge, Bus, Stateful {
 
     private final Media media;
     private final AtariMapper mapper;
@@ -79,5 +83,31 @@ public final class AtariCartridge implements Cartridge, Bus {
     public int resetVector() {
         return read(Atari2600Constants.RESET_VECTOR)
                 | (read(Atari2600Constants.RESET_VECTOR + 1) << 8);
+    }
+
+    /**
+     * Сохраняет состояние маппера. ROM не дублируется: при восстановлении
+     * требуется картридж того же размера и схемы.
+     */
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeLong(media.size());
+        writer.writeBytes(mapper.name().getBytes(StandardCharsets.UTF_8));
+        mapper.save(writer);
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        long savedSize = reader.readLong();
+        if (savedSize != media.size()) {
+            throw new IllegalArgumentException(
+                    "save state cartridge size " + savedSize + " does not match " + media.size());
+        }
+        String savedMapper = new String(reader.readBytes(), StandardCharsets.UTF_8);
+        if (!savedMapper.equals(mapper.name())) {
+            throw new IllegalArgumentException(
+                    "save state mapper " + savedMapper + " does not match " + mapper.name());
+        }
+        mapper.restore(reader);
     }
 }

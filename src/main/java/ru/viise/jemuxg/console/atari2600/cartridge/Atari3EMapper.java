@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
@@ -117,6 +119,39 @@ public final class Atari3EMapper implements AtariMapper {
     public String debugState() {
         return "romBank=" + romBank + " ramBank=" + ramBank
                 + " ramSelected=" + ramSelected;
+    }
+
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeByte(romBank);
+        writer.writeByte(ramBank);
+        writer.writeByte(ramSelected ? 1 : 0);
+        writer.writeBytes(ram.clone());
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        int savedRomBank = reader.readByte();
+        int savedRamBank = reader.readByte();
+        int savedRamSelected = reader.readByte();
+        byte[] savedRam = reader.readBytes();
+        if (savedRomBank >= romBankCount) {
+            throw new IllegalArgumentException("invalid 3E ROM bank in save state: " + savedRomBank);
+        }
+        if (savedRamBank >= RAM_BANK_COUNT) {
+            throw new IllegalArgumentException("invalid 3E RAM bank in save state: " + savedRamBank);
+        }
+        if (savedRamSelected > 1) {
+            throw new IllegalArgumentException(
+                    "invalid 3E RAM select in save state: " + savedRamSelected);
+        }
+        if (savedRam.length != ram.length) {
+            throw new IllegalArgumentException("invalid 3E RAM length in save state: " + savedRam.length);
+        }
+        romBank = savedRomBank;
+        ramBank = savedRamBank;
+        ramSelected = savedRamSelected != 0;
+        System.arraycopy(savedRam, 0, ram, 0, ram.length);
     }
 
     private static int cartridgeOffset(int address) {

@@ -216,7 +216,7 @@ PAL/SECAM, педалы/paddles и экзотические мапперы — �
   - `registers.txt`, `hashes.txt`, `meta.json`;
   - путь `debug/<rom>/frame-N/`.
 
-- [ ] 7.5 Save/restore всей машины:
+- [x] 7.5 Save/restore всей машины:
   - CPU, RIOT, TIA, картридж/маппер, аудио;
   - тест восстановления в середине кадра.
 

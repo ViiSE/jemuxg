@@ -1,5 +1,8 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.Stateful;
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.api.storage.Mapper;
 
 /**
@@ -8,7 +11,7 @@ import ru.viise.jemuxg.api.storage.Mapper;
  * <p>Адреса приходят из окна 6507 {@code $1000..$1FFF}. Для фиксированных
  * картриджей 2K/4K маппер возвращает смещение без переключения банков.</p>
  */
-public interface AtariMapper extends Mapper {
+public interface AtariMapper extends Mapper, Stateful {
 
     String name();
 
@@ -50,5 +53,19 @@ public interface AtariMapper extends Mapper {
      */
     default String debugState() {
         return "bank=" + bank() + "/" + bankCount();
+    }
+
+    /**
+     * Фиксированные мапперы не имеют изменяемого состояния.
+     */
+    @Override
+    default void save(StateWriter writer) {
+    }
+
+    /**
+     * Фиксированные мапперы не имеют изменяемого состояния.
+     */
+    @Override
+    default void restore(StateReader reader) {
     }
 }

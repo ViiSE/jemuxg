@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.console.atari2600.cartridge;
 
+import ru.viise.jemuxg.api.debug.StateReader;
+import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
@@ -58,6 +60,27 @@ public final class AtariE0Mapper implements AtariMapper {
     @Override
     public String debugState() {
         return "segments=" + segments[0] + "," + segments[1] + "," + segments[2] + ",7";
+    }
+
+    @Override
+    public void save(StateWriter writer) {
+        writer.writeByte(segments[0]);
+        writer.writeByte(segments[1]);
+        writer.writeByte(segments[2]);
+    }
+
+    @Override
+    public void restore(StateReader reader) {
+        int segment0 = reader.readByte();
+        int segment1 = reader.readByte();
+        int segment2 = reader.readByte();
+        if (segment0 >= BANK_COUNT || segment1 >= BANK_COUNT || segment2 >= BANK_COUNT) {
+            throw new IllegalArgumentException(
+                    "invalid E0 segments in save state: " + segment0 + "," + segment1 + "," + segment2);
+        }
+        segments[0] = segment0;
+        segments[1] = segment1;
+        segments[2] = segment2;
     }
 
     private static boolean inWindow(int address) {
