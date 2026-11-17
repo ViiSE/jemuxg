@@ -49,6 +49,12 @@ public final class Atari2600Bus implements Bus {
                 && address13 <= Atari2600Constants.RIOT_END) {
             return riotRegisters.read(address13 - Atari2600Constants.RIOT_BASE);
         }
+        if (address13 == 0x01FE) {
+            // FE использует $01FE как hotspot, а чтение идёт из зеркала RIOT RAM.
+            int value = riotRam.read(address13 & Atari2600Constants.RIOT_RAM_OFFSET_MASK);
+            cartridge.write(address13, value);
+            return value;
+        }
         if (address13 >= Atari2600Constants.CARTRIDGE_BASE) {
             // Картридж получает абсолютный адрес окна: $1000..$1FFF.
             return cartridge.read(address13);
@@ -61,7 +67,10 @@ public final class Atari2600Bus implements Bus {
         int address13 = address & Atari2600Constants.ADDRESS_MASK;
 
         if (address13 <= Atari2600Constants.TIA_MIRROR_END) {
-            tia.write(address13 & Atari2600Constants.TIA_ADDRESS_MASK, value);
+            int register = address13 & Atari2600Constants.TIA_ADDRESS_MASK;
+            tia.write(register, value);
+            // 3F/3E используют записи в страницу TIA как hotspots.
+            cartridge.write(register, value);
             return;
         }
         if (address13 >= Atari2600Constants.RIOT_RAM_BASE
@@ -72,6 +81,11 @@ public final class Atari2600Bus implements Bus {
         if (address13 >= Atari2600Constants.RIOT_BASE
                 && address13 <= Atari2600Constants.RIOT_END) {
             riotRegisters.write(address13 - Atari2600Constants.RIOT_BASE, value);
+            return;
+        }
+        if (address13 == 0x01FE) {
+            riotRam.write(address13 & Atari2600Constants.RIOT_RAM_OFFSET_MASK, value);
+            cartridge.write(address13, value);
             return;
         }
         if (address13 >= Atari2600Constants.CARTRIDGE_BASE) {

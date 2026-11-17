@@ -62,6 +62,10 @@ public final class AtariCartridge implements Cartridge, Bus {
 
     @Override
     public int read(int address) {
+        int direct = mapper.readByte(address);
+        if (direct >= 0) {
+            return direct;
+        }
         long offset = mapper.map(address);
         if (offset < 0 || offset >= media.size()) {
             return 0xFF;

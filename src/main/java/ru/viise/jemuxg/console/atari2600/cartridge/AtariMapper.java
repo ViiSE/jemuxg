@@ -28,4 +28,13 @@ public interface AtariMapper extends Mapper {
     default boolean writable() {
         return false;
     }
+
+    /**
+     * Прямое чтение из RAM/специального окна картриджа.
+     *
+     * @return значение 0..255 или -1, если адрес не обслуживается напрямую
+     */
+    default int readByte(int address) {
+        return -1;
+    }
 }
