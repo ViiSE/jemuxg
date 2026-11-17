@@ -9,6 +9,7 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 import javax.sound.sampled.LineUnavailableException;
 import javax.swing.JFrame;
@@ -49,24 +50,31 @@ public final class Frontend {
     private long frameIndex;
 
     public static void launch(Path romPath, String consoleId) {
+        launch(romPath, consoleId, null);
+    }
+
+    public static void launch(Path romPath, String consoleId, String mapperName) {
         SwingUtilities.invokeLater(() -> {
             try {
-                new Frontend(romPath, consoleId).show();
+                new Frontend(romPath, consoleId, mapperName).show();
             } catch (Exception e) {
                 showError(e);
             }
         });
     }
 
-    private Frontend(Path romPath, String consoleId) throws IOException {
+    private Frontend(Path romPath, String consoleId, String mapperName) throws IOException {
         if (!Files.isRegularFile(romPath) || !Files.isReadable(romPath)) {
             throw new IOException("ROM не найден или недоступен: " + romPath);
         }
 
         media = FileMedia.open(romPath, MediaKind.CARTRIDGE);
+        ConsoleConfig config = mapperName == null || mapperName.isBlank()
+                ? ConsoleConfig.empty()
+                : new ConsoleConfig(Map.of("mapper", mapperName));
         Console console = ConsoleRegistry.load()
                 .require(consoleId)
-                .create(ConsoleConfig.empty());
+                .create(config);
         machine = console.machine();
         debugger = console.debugger().orElse(null);
         video = new SwingVideoSink();

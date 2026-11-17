@@ -77,11 +77,12 @@ public final class Main {
             return;
         }
 
-        Frontend.launch(rom, consoleId);
+        Frontend.launch(rom, consoleId, request.mapper());
     }
 
     private static LaunchRequest parseRequest(String[] args) {
         String consoleId = null;
+        String mapper = null;
         Path rom = null;
 
         for (int i = 0; i < args.length; i++) {
@@ -92,6 +93,14 @@ public final class Main {
                     return null;
                 }
                 consoleId = args[i];
+                continue;
+            }
+            if ("--mapper".equals(arg)) {
+                if (++i >= args.length || mapper != null) {
+                    usage();
+                    return null;
+                }
+                mapper = args[i];
                 continue;
             }
             if ("--rom".equals(arg)) {
@@ -109,7 +118,7 @@ public final class Main {
             rom = Path.of(arg);
         }
 
-        return new LaunchRequest(rom, consoleId);
+        return new LaunchRequest(rom, consoleId, mapper);
     }
 
     private static String consoleFor(Path rom) {
@@ -139,16 +148,19 @@ public final class Main {
         System.out.println("""
                 Использование:
                   java -cp target/classes ru.viise.jemuxg.app.Main [rom.nes|rom.a26]
-                  java -cp target/classes ru.viise.jemuxg.app.Main --rom <rom> [--console <id>]
-                  java -cp target/classes ru.viise.jemuxg.app.Main --console <id> <rom>
+                  java -cp target/classes ru.viise.jemuxg.app.Main --rom <rom> [--console <id>] [--mapper <scheme>]
+                  java -cp target/classes ru.viise.jemuxg.app.Main --console <id> <rom> [--mapper <scheme>]
                   java -cp target/classes ru.viise.jemuxg.app.Main --smoke
 
                 Консоль определяется по расширению: .nes -> nes, .a26 -> atari2600.
                 Для неоднозначных файлов используйте --console <id>.
+                Схема картриджа Atari 2600 задаётся через --mapper:
+                  auto (по умолчанию), 2k, 4k, f8, f6, f4, f8sc, f6sc, f4sc,
+                  3f, 3e, e0, e7, fe.
                 """);
     }
 
-    private record LaunchRequest(Path rom, String consoleId) {
+    private record LaunchRequest(Path rom, String consoleId, String mapper) {
     }
 
     private static void smoke() {

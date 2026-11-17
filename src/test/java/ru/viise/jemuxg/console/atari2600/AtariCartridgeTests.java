@@ -125,8 +125,8 @@ public final class AtariCartridgeTests {
                 new ByteArrayMedia("small", MediaKind.CARTRIDGE, new byte[1024])),
                 "1K cartridge rejected");
         expectThrows(IllegalArgumentException.class, () -> slot.insert(
-                new ByteArrayMedia("large", MediaKind.CARTRIDGE, new byte[12288])),
-                "12K cartridge rejected");
+                new ByteArrayMedia("large", MediaKind.CARTRIDGE, new byte[6144])),
+                "6K cartridge rejected without explicit mapper");
     }
 
     private static byte[] mediaBytes(int size) {

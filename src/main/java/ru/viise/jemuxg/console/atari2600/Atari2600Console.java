@@ -14,10 +14,15 @@ public final class Atari2600Console implements Console {
     private static final int CONTROLLER_PORTS = 2;
 
     private final ConsoleInfo info;
-    private final Atari2600Machine machine = new Atari2600Machine();
+    private final Atari2600Machine machine;
 
     Atari2600Console(ConsoleInfo info) {
+        this(info, null);
+    }
+
+    Atari2600Console(ConsoleInfo info, String mapperName) {
         this.info = info;
+        this.machine = new Atari2600Machine(mapperName);
     }
 
     @Override

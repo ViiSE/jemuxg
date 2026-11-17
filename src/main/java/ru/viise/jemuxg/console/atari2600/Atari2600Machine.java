@@ -20,12 +20,21 @@ public final class Atari2600Machine implements Machine {
 
     private static final int CONTROLLER_PORTS = 2;
 
-    private final Atari2600CartridgeSlot cartridgeSlot = new Atari2600CartridgeSlot();
-    private final List<StorageSlot> slots = List.of(cartridgeSlot);
+    private final Atari2600CartridgeSlot cartridgeSlot;
+    private final List<StorageSlot> slots;
     private final Controller[] controllers = new Controller[CONTROLLER_PORTS];
     private final TiaVideo tia = new Tia();
 
     public Atari2600Machine() {
+        this(null);
+    }
+
+    /**
+     * @param mapperName явная схема картриджа или {@code null}/{@code auto}
+     */
+    public Atari2600Machine(String mapperName) {
+        cartridgeSlot = new Atari2600CartridgeSlot(mapperName);
+        slots = List.of(cartridgeSlot);
         tia.reset();
     }
 

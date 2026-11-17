@@ -11,13 +11,22 @@ import ru.viise.jemuxg.console.atari2600.cartridge.AtariCartridge;
 /**
  * Слот картриджа Atari 2600.
  *
- * <p>Принимает только {@link MediaKind#CARTRIDGE}. Поддерживаются
- * фиксированные картриджи 2 КБ и 4 КБ; банковские схемы появятся
- * на этапе 6. Пустой слот читается как {@code 0xFF}, запись игнорируется.</p>
+ * <p>Принимает только {@link MediaKind#CARTRIDGE}. Схема картриджа
+ * выбирается автоматически или через явную настройку {@code mapper}.
+ * Пустой слот читается как {@code 0xFF}, запись игнорируется.</p>
  */
 public final class Atari2600CartridgeSlot implements StorageSlot, Bus {
 
+    private final String mapperName;
     private AtariCartridge cartridge;
+
+    public Atari2600CartridgeSlot() {
+        this(null);
+    }
+
+    public Atari2600CartridgeSlot(String mapperName) {
+        this.mapperName = mapperName;
+    }
 
     @Override
     public String id() {
@@ -36,7 +45,7 @@ public final class Atari2600CartridgeSlot implements StorageSlot, Bus {
 
     @Override
     public void insert(Media media) {
-        cartridge = new AtariCartridge(media);
+        cartridge = new AtariCartridge(media, mapperName);
     }
 
     @Override

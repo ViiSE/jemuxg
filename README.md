@@ -36,6 +36,19 @@ java -cp target/classes ru.viise.jemuxg.app.Main --rom game.nes
 java -cp target/classes ru.viise.jemuxg.app.Main --console atari2600 game.bin
 ```
 
+Схему картриджа Atari 2600 можно задать явно:
+
+```bash
+java -cp target/classes ru.viise.jemuxg.app.Main game.a26 --mapper e0
+```
+
+Поддерживаются `auto` (по умолчанию), `2k`, `4k`, `f8`, `f6`, `f4`,
+`f8sc`, `f6sc`, `f4sc`, `3f`, `3e`, `e0`, `e7`, `fe`. Автоопределение
+идёт по размеру: 2K/4K — фиксированные, 8K — F8, 12K — E7, 16K — F6,
+32K — F4. Для 8K имя файла может подсказать `e0`, `fe` или `f8sc`;
+16K — `e7`/`f6sc`; 32K — `f4sc`. Схемы 3F/3E неоднозначны и задаются
+только явно.
+
 Проверка без окна (headless):
 
 ```bash

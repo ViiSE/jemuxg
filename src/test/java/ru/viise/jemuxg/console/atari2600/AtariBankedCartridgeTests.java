@@ -78,12 +78,7 @@ public final class AtariBankedCartridgeTests {
         check(cartridge(4).mapper().name().equals("F6"), "16K detected as F6");
         check(cartridge(8).mapper().name().equals("F4"), "32K detected as F4");
 
-        try {
-            cartridge(3);
-            check(false, "12K cartridge rejected");
-        } catch (IllegalArgumentException e) {
-            check(true, "12K cartridge rejected");
-        }
+        check(cartridge(3).mapper().name().equals("E7"), "12K detected as E7");
     }
 
     private static AtariCartridge cartridge(int banks) {

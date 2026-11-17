@@ -13,6 +13,9 @@ target/
 # .nes files
 /*.nes
 
+# .a26 files
+/*.a26
+
 # .idea files
 .idea/
 

@@ -6,6 +6,7 @@ import ru.viise.jemuxg.api.console.ConsoleConfig;
 import ru.viise.jemuxg.api.console.ConsoleInfo;
 import ru.viise.jemuxg.api.console.ConsoleProvider;
 import ru.viise.jemuxg.api.storage.MediaKind;
+import ru.viise.jemuxg.console.atari2600.cartridge.AtariMapperSelector;
 
 /**
  * Провайдер Atari 2600. Регистрируется через META-INF/services.
@@ -24,7 +25,7 @@ public final class Atari2600Provider implements ConsoleProvider {
 
     @Override
     public Console create(ConsoleConfig config) {
-        return new Atari2600Console(INFO);
+        return new Atari2600Console(INFO, config.option(AtariMapperSelector.OPTION, null));
     }
 
     private record Info(String id, String name, Set<MediaKind> supportedMedia) implements ConsoleInfo {

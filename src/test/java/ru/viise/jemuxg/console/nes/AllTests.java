@@ -5,6 +5,7 @@ import ru.viise.jemuxg.console.atari2600.AtariBankedCartridgeTests;
 import ru.viise.jemuxg.console.atari2600.Atari6507Tests;
 import ru.viise.jemuxg.console.atari2600.AtariCartridgeTests;
 import ru.viise.jemuxg.console.atari2600.AtariExtraMapperTests;
+import ru.viise.jemuxg.console.atari2600.AtariMapperSelectionTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotPortsTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotRamTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotTimerTests;
@@ -30,6 +31,7 @@ public final class AllTests {
         AtariCartridgeTests.main(args);
         AtariBankedCartridgeTests.main(args);
         AtariExtraMapperTests.main(args);
+        AtariMapperSelectionTests.main(args);
         AtariRiotRamTests.main(args);
         AtariRiotTimerTests.main(args);
         AtariRiotPortsTests.main(args);
