@@ -102,6 +102,27 @@ java -cp target/classes:target/test-classes \
 - nestest: полный golden-log на 8991 инструкцию.
 - Blargg PPU и sprite-hit ROM: проверка `framebuffer.idx` по эталонному
   SHA-256. ROM лежат в `src/test/resources/test-roms/`.
+- Atari 2600: 6507, карта памяти, RIOT, TIA (видео, звук, коллизии,
+  ввод), мапперы, save/restore и интеграция машины.
+- Atari reference ROM: сравнение кадров `colors` и `score-mode` из
+  missingno-vcs-tests с эталонными PNG Stella. Эталоны лежат в
+  `src/test/resources/test-roms/atari/`.
+
+## Atari 2600
+
+Реализована NTSC-модель: 160×192 видимых пикселя, 262 строки по 228
+цветовых тактов, CPU 6507 на 1,19 МГц. Поддерживаются картриджи 2K/4K,
+F8/F6/F4, 3F, 3E, E0, E7, FE и SuperChip, а также автоопределение схемы
+по размеру и имени файла. Схему можно задать через `--mapper`.
+
+Ограничения текущей реализации:
+
+- нет PAL/SECAM и переключения частоты кадров;
+- HMOVE реализован упрощённо (сдвиг применяется сразу, без comb-эффекта);
+- TIA и CPU не являются полностью цикл-точными на уровне отдельных
+  тактов;
+- save/restore доступен через API `Stateful`, но в UI пока нет хоткея
+  сохранения/загрузки.
 
 ## Отладка
 

@@ -9,9 +9,10 @@ import ru.viise.jemuxg.api.hardware.Memory;
  *
  * <p>Адреса 6507 маскируются до 13 бит. TIA занимает
  * {@code $0000..$003F} и зеркалируется в {@code $0040..$007F};
- * RAM RIOT — {@code $0080..$00FF}, регистры RIOT — {@code $0280..$029F},
- * картридж — {@code $1000..$1FFF}. Остальные адреса читаются как
- * {@code 0xFF}, запись в них игнорируется.</p>
+ * RAM RIOT — {@code $0080..$00FF} и её зеркала
+ * {@code $0100..$01FF} (включая страницу стека), регистры RIOT —
+ * {@code $0280..$029F}, картридж — {@code $1000..$1FFF}. Остальные
+ * адреса читаются как {@code 0xFF}, запись в них игнорируется.</p>
  */
 public final class Atari2600Bus implements Bus {
 
@@ -41,19 +42,19 @@ public final class Atari2600Bus implements Bus {
         if (address13 <= Atari2600Constants.TIA_MIRROR_END) {
             return tia.read(address13 & Atari2600Constants.TIA_ADDRESS_MASK);
         }
+        if (address13 == 0x01FE) {
+            // FE использует $01FE как hotspot, а чтение идёт из зеркала RIOT RAM.
+            int value = riotRam.read(0x7E);
+            cartridge.write(address13, value);
+            return value;
+        }
         if (address13 >= Atari2600Constants.RIOT_RAM_BASE
-                && address13 <= Atari2600Constants.RIOT_RAM_END) {
+                && address13 <= 0x01FF) {
             return riotRam.read(address13 & Atari2600Constants.RIOT_RAM_OFFSET_MASK);
         }
         if (address13 >= Atari2600Constants.RIOT_BASE
                 && address13 <= Atari2600Constants.RIOT_END) {
             return riotRegisters.read(address13 - Atari2600Constants.RIOT_BASE);
-        }
-        if (address13 == 0x01FE) {
-            // FE использует $01FE как hotspot, а чтение идёт из зеркала RIOT RAM.
-            int value = riotRam.read(address13 & Atari2600Constants.RIOT_RAM_OFFSET_MASK);
-            cartridge.write(address13, value);
-            return value;
         }
         if (address13 >= Atari2600Constants.CARTRIDGE_BASE) {
             // Картридж получает абсолютный адрес окна: $1000..$1FFF.
@@ -73,19 +74,19 @@ public final class Atari2600Bus implements Bus {
             cartridge.write(register, value);
             return;
         }
+        if (address13 == 0x01FE) {
+            riotRam.write(0x7E, value);
+            cartridge.write(address13, value);
+            return;
+        }
         if (address13 >= Atari2600Constants.RIOT_RAM_BASE
-                && address13 <= Atari2600Constants.RIOT_RAM_END) {
+                && address13 <= 0x01FF) {
             riotRam.write(address13 & Atari2600Constants.RIOT_RAM_OFFSET_MASK, value);
             return;
         }
         if (address13 >= Atari2600Constants.RIOT_BASE
                 && address13 <= Atari2600Constants.RIOT_END) {
             riotRegisters.write(address13 - Atari2600Constants.RIOT_BASE, value);
-            return;
-        }
-        if (address13 == 0x01FE) {
-            riotRam.write(address13 & Atari2600Constants.RIOT_RAM_OFFSET_MASK, value);
-            cartridge.write(address13, value);
             return;
         }
         if (address13 >= Atari2600Constants.CARTRIDGE_BASE) {

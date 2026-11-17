@@ -313,10 +313,10 @@ public final class Tia implements TiaVideo {
             case VSYNC -> vsyncRegister = value & 0xFF;
             case VBLANK -> vblankRegister = value & 0xFF;
             case WSYNC -> wsync = true;
-            case COLUP0 -> coluP0 = value & 0x7F;
-            case COLUP1 -> coluP1 = value & 0x7F;
-            case COLUPF -> coluPf = value & 0x7F;
-            case COLUBK -> coluBk = value & 0x7F;
+            case COLUP0 -> coluP0 = value & 0xFF;
+            case COLUP1 -> coluP1 = value & 0xFF;
+            case COLUPF -> coluPf = value & 0xFF;
+            case COLUBK -> coluBk = value & 0xFF;
             case CTRLPF -> ctrlPf = value & 0xFF;
             case PF0 -> pf0 = value & 0xFF;
             case PF1 -> pf1 = value & 0xFF;
@@ -612,59 +612,59 @@ public final class Tia implements TiaVideo {
                     x, resmp1, player1X, missile1X, nusiz1, enam1);
             boolean ball = ballPixel(x);
             updateCollisions(playfield != 0, player0, player1, missile0, missile1, ball);
-            int background = coluBk & 0x7F;
+            int background = colorIndex(coluBk);
             int playfieldColor = (ctrlPf & 0x06) == 0x02
-                    ? (x < Atari2600Constants.VISIBLE_WIDTH / 2 ? coluP0 : coluP1) & 0x7F
-                    : coluPf & 0x7F;
+                    ? colorIndex(x < Atari2600Constants.VISIBLE_WIDTH / 2 ? coluP0 : coluP1)
+                    : colorIndex(coluPf);
 
             if ((ctrlPf & 0x06) == 0x04) {
                 // Приоритет playfield: PF/BL -> P0/M0 -> P1/M1 -> BK.
                 if (playfield != 0) {
-                    colorIndex = coluPf & 0x7F;
+                    colorIndex = colorIndex(coluPf);
                 } else if (ball) {
-                    colorIndex = coluPf & 0x7F;
+                    colorIndex = colorIndex(coluPf);
                 } else if (player0) {
-                    colorIndex = coluP0 & 0x7F;
+                    colorIndex = colorIndex(coluP0);
                 } else if (missile0) {
-                    colorIndex = coluP0 & 0x7F;
+                    colorIndex = colorIndex(coluP0);
                 } else if (player1) {
-                    colorIndex = coluP1 & 0x7F;
+                    colorIndex = colorIndex(coluP1);
                 } else if (missile1) {
-                    colorIndex = coluP1 & 0x7F;
+                    colorIndex = colorIndex(coluP1);
                 } else {
                     colorIndex = background;
                 }
             } else if ((ctrlPf & 0x06) == 0x02) {
                 // Score mode: P0/M0 -> PF -> P1/M1 -> BL -> BK.
                 if (player0) {
-                    colorIndex = coluP0 & 0x7F;
+                    colorIndex = colorIndex(coluP0);
                 } else if (missile0) {
-                    colorIndex = coluP0 & 0x7F;
+                    colorIndex = colorIndex(coluP0);
                 } else if (playfield != 0) {
                     colorIndex = playfieldColor;
                 } else if (player1) {
-                    colorIndex = coluP1 & 0x7F;
+                    colorIndex = colorIndex(coluP1);
                 } else if (missile1) {
-                    colorIndex = coluP1 & 0x7F;
+                    colorIndex = colorIndex(coluP1);
                 } else if (ball) {
-                    colorIndex = coluPf & 0x7F;
+                    colorIndex = colorIndex(coluPf);
                 } else {
                     colorIndex = background;
                 }
             } else {
                 // Обычный приоритет: P0/M0 -> P1/M1 -> PF/BL -> BK.
                 if (player0) {
-                    colorIndex = coluP0 & 0x7F;
+                    colorIndex = colorIndex(coluP0);
                 } else if (missile0) {
-                    colorIndex = coluP0 & 0x7F;
+                    colorIndex = colorIndex(coluP0);
                 } else if (player1) {
-                    colorIndex = coluP1 & 0x7F;
+                    colorIndex = colorIndex(coluP1);
                 } else if (missile1) {
-                    colorIndex = coluP1 & 0x7F;
+                    colorIndex = colorIndex(coluP1);
                 } else if (playfield != 0) {
                     colorIndex = playfieldColor;
                 } else if (ball) {
-                    colorIndex = coluPf & 0x7F;
+                    colorIndex = colorIndex(coluPf);
                 } else {
                     colorIndex = background;
                 }
@@ -674,6 +674,10 @@ public final class Tia implements TiaVideo {
         int offset = y * Atari2600Constants.VISIBLE_WIDTH + x;
         pixels[offset] = TiaPalette.ARGB[colorIndex];
         pixelIndices[offset] = (byte) colorIndex;
+    }
+
+    private static int colorIndex(int colorCode) {
+        return (colorCode >> 1) & 0x7F;
     }
 
     private int currentVisibleX() {

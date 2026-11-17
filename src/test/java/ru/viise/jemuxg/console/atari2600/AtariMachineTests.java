@@ -60,7 +60,7 @@ public final class AtariMachineTests {
         machine.runFrame();
 
         int[] pixels = frames.get(0).pixels();
-        check(pixels[100 * 160 + 80] == TiaPalette.ARGB[0x46],
+        check(pixels[100 * 160 + 80] == TiaPalette.ARGB[0x23],
                 "CPU controls TIA background color");
     }
 

@@ -16,6 +16,7 @@ public final class Atari2600BusTests {
     public static void main(String[] args) {
         tiaAndMirror();
         riotRam();
+        riotRamMirrors();
         riotRegisters();
         cartridge();
         unmappedAddresses();
@@ -56,6 +57,18 @@ public final class Atari2600BusTests {
         check(bus.read(0x00FF) == 0x34, "RIOT RAM at $00FF");
     }
 
+    private static void riotRamMirrors() {
+        Ram ram = new Ram(Atari2600Constants.RIOT_RAM_SIZE);
+        Atari2600Bus bus = newBus(new ProbeBus(), ram, new ProbeBus(), new ProbeBus());
+
+        bus.write(0x0180, 0x5A);
+        check(bus.read(0x0080) == 0x5A, "RIOT RAM mirror $0180 maps to $0080");
+        bus.write(0x01FF, 0x6B);
+        check(bus.read(0x00FF) == 0x6B, "RIOT RAM mirror $01FF maps to $00FF");
+        bus.write(0x0100, 0x7C);
+        check(bus.read(0x0080) == 0x7C, "stack page $0100 mirrors RIOT RAM");
+    }
+
     private static void riotRegisters() {
         ProbeBus riot = new ProbeBus();
         Atari2600Bus bus = newBus(new ProbeBus(), new Ram(128), riot, new ProbeBus());
@@ -94,12 +107,10 @@ public final class Atari2600BusTests {
         ProbeBus cartridge = new ProbeBus();
         Atari2600Bus bus = newBus(tia, new Ram(128), riot, cartridge);
 
-        check(bus.read(0x0100) == 0xFF, "unmapped $0100 reads $FF");
         check(bus.read(0x027F) == 0xFF, "unmapped $027F reads $FF");
         check(bus.read(0x02A0) == 0xFF, "unmapped $02A0 reads $FF");
         check(bus.read(0x0FFF) == 0xFF, "unmapped $0FFF reads $FF");
 
-        bus.write(0x0100, 0xAB);
         bus.write(0x02A0, 0xCD);
         check(tia.lastWriteAddress == -1 && riot.lastWriteAddress == -1
                         && cartridge.lastWriteAddress == -1,

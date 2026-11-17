@@ -62,13 +62,13 @@ public final class AtariDebuggerTests {
         check(mapperRam.length == 0, "F8 mapper has no RAM");
 
         int center = 100 * 160 + 80;
-        check((indices[center] & 0xFF) == 0x46, "index framebuffer contains COLUBK");
+        check((indices[center] & 0xFF) == 0x23, "index framebuffer contains COLUBK");
         check(allIndicesInRange(indices), "index framebuffer stays within 0..127");
         int centerArgb = (argb[center * 4] & 0xFF)
                 | ((argb[center * 4 + 1] & 0xFF) << 8)
                 | ((argb[center * 4 + 2] & 0xFF) << 16)
                 | ((argb[center * 4 + 3] & 0xFF) << 24);
-        check(centerArgb == TiaPalette.ARGB[0x46], "ARGB buffer contains TIA palette color");
+        check(centerArgb == TiaPalette.ARGB[0x23], "ARGB buffer contains TIA palette color");
 
         check((riotRam[0x00] & 0xFF) == 0xAA, "RIOT RAM byte captured");
         check((tiaRegisters[Tia.COLUBK] & 0xFF) == 0x46, "TIA COLUBK register captured");

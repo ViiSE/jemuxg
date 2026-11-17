@@ -95,7 +95,7 @@ public final class AtariTiaTests {
             zero &= index == 0;
         }
         check(zero, "TIA index framebuffer starts at color 0");
-        check(tia.framebufferArgb()[0] == TiaPalette.ARGB[0],
+        check(tia.framebufferArgb()[0] == paletteColor(0),
                 "TIA framebuffer starts with palette color 0");
 
         indices[0] = 127;
@@ -114,8 +114,8 @@ public final class AtariTiaTests {
 
         tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
         int[] pixels = tia.framebufferArgb();
-        int pf = TiaPalette.ARGB[0x0F];
-        int bk = TiaPalette.ARGB[0x08];
+        int pf = paletteColor(0x0F);
+        int bk = paletteColor(0x08);
 
         check(pixels[0] == pf, "playfield PF0 bit renders");
         check(pixels[3] == pf, "playfield PF0 spans four pixels");
@@ -128,8 +128,8 @@ public final class AtariTiaTests {
         check(pixels[96] == pf, "playfield repeats PF1 on right half");
         check(pixels[128] == pf, "playfield repeats PF2 on right half");
         byte[] indices = tia.framebufferIndices();
-        check((indices[0] & 0xFF) == 0x0F, "playfield index framebuffer PF color");
-        check((indices[4] & 0xFF) == 0x08, "playfield index framebuffer background color");
+        check((indices[0] & 0xFF) == 0x07, "playfield index framebuffer PF color");
+        check((indices[4] & 0xFF) == 0x04, "playfield index framebuffer background color");
     }
 
     private static void playfieldReflect() {
@@ -141,11 +141,11 @@ public final class AtariTiaTests {
 
         tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
         int[] pixels = tia.framebufferArgb();
-        int pf = TiaPalette.ARGB[0x20];
+        int pf = paletteColor(0x20);
 
         check(pixels[80] == pf, "reflected playfield starts with PF2 bit 7");
         check(pixels[83] == pf, "reflected playfield spans four pixels");
-        check(pixels[84] == TiaPalette.ARGB[0], "reflected playfield ends after four pixels");
+        check(pixels[84] == paletteColor(0), "reflected playfield ends after four pixels");
         check(tia.controlPf() == 0x01, "CTRLPF reflect bit stored");
     }
 
@@ -162,9 +162,9 @@ public final class AtariTiaTests {
         tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
         int[] pixels = tia.framebufferArgb();
 
-        check(pixels[0] == TiaPalette.ARGB[0x20], "score mode uses COLUP0 on left");
-        check(pixels[80] == TiaPalette.ARGB[0x40], "score mode uses COLUP1 on right");
-        check(pixels[4] == TiaPalette.ARGB[0x08], "score mode keeps background color");
+        check(pixels[0] == paletteColor(0x20), "score mode uses COLUP0 on left");
+        check(pixels[80] == paletteColor(0x40), "score mode uses COLUP1 on right");
+        check(pixels[4] == paletteColor(0x08), "score mode keeps background color");
     }
 
     private static void playfieldVblank() {
@@ -204,7 +204,7 @@ public final class AtariTiaTests {
         restored.tick(remaining);
         check(Arrays.equals(original.framebufferArgb(), restored.framebufferArgb()),
                 "restored playfield renders identically");
-        check(restored.framebufferArgb()[0] == TiaPalette.ARGB[0x0F],
+        check(restored.framebufferArgb()[0] == paletteColor(0x0F),
                 "restored playfield uses restored color");
     }
 
@@ -218,13 +218,13 @@ public final class AtariTiaTests {
         finishFrame(tia);
 
         int[] pixels = tia.framebufferArgb();
-        check(pixelAt(pixels, 10, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(pixels, 10, 150) == paletteColor(0x20),
                 "player 0 first pixel uses COLUP0");
-        check(pixelAt(pixels, 17, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(pixels, 17, 150) == paletteColor(0x20),
                 "player 0 spans eight pixels");
-        check(pixelAt(pixels, 18, 150) == TiaPalette.ARGB[0x08],
+        check(pixelAt(pixels, 18, 150) == paletteColor(0x08),
                 "player 0 ends after eight pixels");
-        check((tia.framebufferIndices()[150 * 160 + 10] & 0xFF) == 0x20,
+        check((tia.framebufferIndices()[150 * 160 + 10] & 0xFF) == 0x10,
                 "player 0 writes palette index");
 
         Tia reflected = new Tia();
@@ -234,9 +234,9 @@ public final class AtariTiaTests {
         reflected.registers().write(Tia.REFP0, 0x08);
         finishFrame(reflected);
         int[] reflectedPixels = reflected.framebufferArgb();
-        check(pixelAt(reflectedPixels, 10, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(reflectedPixels, 10, 150) == paletteColor(0x20),
                 "reflected player 0 starts with pattern bit 0");
-        check(pixelAt(reflectedPixels, 17, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(reflectedPixels, 17, 150) == paletteColor(0),
                 "reflected player 0 clears pattern bit 7");
 
         Tia player1 = new Tia();
@@ -244,49 +244,49 @@ public final class AtariTiaTests {
         player1.registers().write(Tia.COLUP1, 0x40);
         player1.registers().write(Tia.GRP1, 0x80);
         finishFrame(player1);
-        check(pixelAt(player1.framebufferArgb(), 40, 150) == TiaPalette.ARGB[0x40],
+        check(pixelAt(player1.framebufferArgb(), 40, 150) == paletteColor(0x40),
                 "player 1 uses COLUP1 and RESP1 position");
     }
 
     private static void playerCopiesAndSizes() {
         Tia close = playerWithNusiz(1);
-        check(pixelAt(close.framebufferArgb(), 26, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(close.framebufferArgb(), 26, 150) == paletteColor(0x20),
                 "NUSIZ 1 renders two close copies");
 
         Tia medium = playerWithNusiz(2);
-        check(pixelAt(medium.framebufferArgb(), 42, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(medium.framebufferArgb(), 42, 150) == paletteColor(0x20),
                 "NUSIZ 2 renders two medium copies");
 
         Tia wide = playerWithNusiz(4);
-        check(pixelAt(wide.framebufferArgb(), 74, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(wide.framebufferArgb(), 74, 150) == paletteColor(0x20),
                 "NUSIZ 4 renders two wide copies");
 
         Tia threeClose = playerWithNusiz(3);
-        check(pixelAt(threeClose.framebufferArgb(), 26, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(threeClose.framebufferArgb(), 26, 150) == paletteColor(0x20),
                 "NUSIZ 3 second copy");
-        check(pixelAt(threeClose.framebufferArgb(), 42, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(threeClose.framebufferArgb(), 42, 150) == paletteColor(0x20),
                 "NUSIZ 3 third copy");
 
         Tia threeMedium = playerWithNusiz(6);
-        check(pixelAt(threeMedium.framebufferArgb(), 42, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(threeMedium.framebufferArgb(), 42, 150) == paletteColor(0x20),
                 "NUSIZ 6 second copy");
-        check(pixelAt(threeMedium.framebufferArgb(), 74, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(threeMedium.framebufferArgb(), 74, 150) == paletteColor(0x20),
                 "NUSIZ 6 third copy");
 
         Tia doubled = playerWithNusiz(5);
-        check(pixelAt(doubled.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20]
-                        && pixelAt(doubled.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(doubled.framebufferArgb(), 10, 150) == paletteColor(0x20)
+                        && pixelAt(doubled.framebufferArgb(), 11, 150) == paletteColor(0x20),
                 "NUSIZ 5 doubles player width");
-        check(pixelAt(doubled.framebufferArgb(), 12, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(doubled.framebufferArgb(), 12, 150) == paletteColor(0),
                 "NUSIZ 5 stops after double width");
 
         Tia quad = playerWithNusiz(7);
         boolean quadWidth = true;
         for (int x = 10; x < 14; x++) {
-            quadWidth &= pixelAt(quad.framebufferArgb(), x, 150) == TiaPalette.ARGB[0x20];
+            quadWidth &= pixelAt(quad.framebufferArgb(), x, 150) == paletteColor(0x20);
         }
         check(quadWidth, "NUSIZ 7 quadruples player width");
-        check(pixelAt(quad.framebufferArgb(), 14, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(quad.framebufferArgb(), 14, 150) == paletteColor(0),
                 "NUSIZ 7 stops after quad width");
     }
 
@@ -308,9 +308,9 @@ public final class AtariTiaTests {
         missile0.registers().write(Tia.NUSIZ0, 0);
         missile0.registers().write(Tia.ENAM0, 0x02);
         finishFrame(missile0);
-        check(pixelAt(missile0.framebufferArgb(), 20, 150) == TiaPalette.ARGB[0x30],
+        check(pixelAt(missile0.framebufferArgb(), 20, 150) == paletteColor(0x30),
                 "missile 0 renders one pixel");
-        check(pixelAt(missile0.framebufferArgb(), 21, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(missile0.framebufferArgb(), 21, 150) == paletteColor(0),
                 "missile 0 width 1 ends");
 
         Tia missile0Wide = new Tia();
@@ -319,10 +319,10 @@ public final class AtariTiaTests {
         missile0Wide.registers().write(Tia.NUSIZ0, 0x10);
         missile0Wide.registers().write(Tia.ENAM0, 0x02);
         finishFrame(missile0Wide);
-        check(pixelAt(missile0Wide.framebufferArgb(), 20, 150) == TiaPalette.ARGB[0x30]
-                        && pixelAt(missile0Wide.framebufferArgb(), 21, 150) == TiaPalette.ARGB[0x30],
+        check(pixelAt(missile0Wide.framebufferArgb(), 20, 150) == paletteColor(0x30)
+                        && pixelAt(missile0Wide.framebufferArgb(), 21, 150) == paletteColor(0x30),
                 "NUSIZ missile width 2");
-        check(pixelAt(missile0Wide.framebufferArgb(), 22, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(missile0Wide.framebufferArgb(), 22, 150) == paletteColor(0),
                 "NUSIZ missile width 2 ends");
 
         Tia missileCopies = new Tia();
@@ -331,7 +331,7 @@ public final class AtariTiaTests {
         missileCopies.registers().write(Tia.NUSIZ0, 0x01);
         missileCopies.registers().write(Tia.ENAM0, 0x02);
         finishFrame(missileCopies);
-        check(pixelAt(missileCopies.framebufferArgb(), 36, 150) == TiaPalette.ARGB[0x30],
+        check(pixelAt(missileCopies.framebufferArgb(), 36, 150) == paletteColor(0x30),
                 "missile 0 copies follow NUSIZ");
 
         Tia missile1 = new Tia();
@@ -339,7 +339,7 @@ public final class AtariTiaTests {
         missile1.registers().write(Tia.COLUP1, 0x40);
         missile1.registers().write(Tia.ENAM1, 0x02);
         finishFrame(missile1);
-        check(pixelAt(missile1.framebufferArgb(), 30, 150) == TiaPalette.ARGB[0x40],
+        check(pixelAt(missile1.framebufferArgb(), 30, 150) == paletteColor(0x40),
                 "missile 1 uses COLUP1 and RESP1 position");
 
         Tia ball = new Tia();
@@ -348,10 +348,10 @@ public final class AtariTiaTests {
         ball.registers().write(Tia.CTRLPF, 0x10);
         ball.registers().write(Tia.ENABL, 0x02);
         finishFrame(ball);
-        check(pixelAt(ball.framebufferArgb(), 40, 150) == TiaPalette.ARGB[0x0F]
-                        && pixelAt(ball.framebufferArgb(), 41, 150) == TiaPalette.ARGB[0x0F],
+        check(pixelAt(ball.framebufferArgb(), 40, 150) == paletteColor(0x0F)
+                        && pixelAt(ball.framebufferArgb(), 41, 150) == paletteColor(0x0F),
                 "ball width 2 from CTRLPF");
-        check(pixelAt(ball.framebufferArgb(), 42, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(ball.framebufferArgb(), 42, 150) == paletteColor(0),
                 "ball width 2 ends");
     }
 
@@ -362,12 +362,12 @@ public final class AtariTiaTests {
         player.registers().write(Tia.VDELP0, 0x01);
         player.registers().write(Tia.GRP0, 0xFF);
         finishFrame(player);
-        check(pixelAt(player.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(player.framebufferArgb(), 10, 150) == paletteColor(0),
                 "VDELP0 delays first player write");
 
         player.registers().write(Tia.GRP0, 0x00);
         finishFrame(player);
-        check(pixelAt(player.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(player.framebufferArgb(), 10, 150) == paletteColor(0x20),
                 "VDELP0 shows previous player pattern");
 
         Tia ball = new Tia();
@@ -376,12 +376,12 @@ public final class AtariTiaTests {
         ball.registers().write(Tia.VDELBL, 0x01);
         ball.registers().write(Tia.ENABL, 0x02);
         finishFrame(ball);
-        check(pixelAt(ball.framebufferArgb(), 30, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(ball.framebufferArgb(), 30, 150) == paletteColor(0),
                 "VDELBL delays first ball enable");
 
         ball.registers().write(Tia.ENABL, 0x00);
         finishFrame(ball);
-        check(pixelAt(ball.framebufferArgb(), 30, 150) == TiaPalette.ARGB[0x0F],
+        check(pixelAt(ball.framebufferArgb(), 30, 150) == paletteColor(0x0F),
                 "VDELBL shows previous ball enable");
     }
 
@@ -396,9 +396,9 @@ public final class AtariTiaTests {
         finishFrame(tia);
 
         int[] pixels = tia.framebufferArgb();
-        check(pixelAt(pixels, 14, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(pixels, 14, 150) == paletteColor(0x20),
                 "RESMP0 locks missile to player center");
-        check(pixelAt(pixels, 30, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(pixels, 30, 150) == paletteColor(0),
                 "RESMP0 removes missile from its old position");
     }
 
@@ -420,7 +420,7 @@ public final class AtariTiaTests {
         restored.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
         check(Arrays.equals(original.framebufferArgb(), restored.framebufferArgb()),
                 "restored player and missile state renders identically");
-        check(pixelAt(restored.framebufferArgb(), 26, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(restored.framebufferArgb(), 26, 150) == paletteColor(0x20),
                 "restored player keeps NUSIZ copies");
     }
 
@@ -432,9 +432,9 @@ public final class AtariTiaTests {
         right.registers().write(Tia.HMP0, 0x10);
         right.registers().write(Tia.HMOVE, 0);
         finishFrame(right);
-        check(pixelAt(right.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(right.framebufferArgb(), 11, 150) == paletteColor(0x20),
                 "HMOVE +1 shifts player right");
-        check(pixelAt(right.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(right.framebufferArgb(), 10, 150) == paletteColor(0),
                 "HMOVE +1 clears old player position");
 
         Tia left = new Tia();
@@ -444,9 +444,9 @@ public final class AtariTiaTests {
         left.registers().write(Tia.HMP0, 0xF0);
         left.registers().write(Tia.HMOVE, 0);
         finishFrame(left);
-        check(pixelAt(left.framebufferArgb(), 9, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(left.framebufferArgb(), 9, 150) == paletteColor(0x20),
                 "HMOVE -1 shifts player left");
-        check(pixelAt(left.framebufferArgb(), 17, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(left.framebufferArgb(), 17, 150) == paletteColor(0),
                 "HMOVE -1 clears old player position");
 
         Tia zero = new Tia();
@@ -455,7 +455,7 @@ public final class AtariTiaTests {
         zero.registers().write(Tia.GRP0, 0xFF);
         zero.registers().write(Tia.HMOVE, 0);
         finishFrame(zero);
-        check(pixelAt(zero.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(zero.framebufferArgb(), 10, 150) == paletteColor(0x20),
                 "HMOVE with zero motion keeps player position");
 
         Tia wrap = new Tia();
@@ -465,9 +465,9 @@ public final class AtariTiaTests {
         wrap.registers().write(Tia.HMP0, 0x10);
         wrap.registers().write(Tia.HMOVE, 0);
         finishFrame(wrap);
-        check(pixelAt(wrap.framebufferArgb(), 0, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(wrap.framebufferArgb(), 0, 150) == paletteColor(0x20),
                 "HMOVE wraps player around right edge");
-        check(pixelAt(wrap.framebufferArgb(), 159, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(wrap.framebufferArgb(), 159, 150) == paletteColor(0),
                 "HMOVE wrap clears old right-edge position");
     }
 
@@ -496,15 +496,15 @@ public final class AtariTiaTests {
         finishFrame(tia);
 
         int[] pixels = tia.framebufferArgb();
-        check(pixelAt(pixels, 11, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(pixels, 11, 150) == paletteColor(0x20),
                 "HMOVE shifts player 0");
-        check(pixelAt(pixels, 22, 150) == TiaPalette.ARGB[0x40],
+        check(pixelAt(pixels, 22, 150) == paletteColor(0x40),
                 "HMOVE shifts player 1");
-        check(pixelAt(pixels, 33, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(pixels, 33, 150) == paletteColor(0x20),
                 "HMOVE shifts missile 0");
-        check(pixelAt(pixels, 44, 150) == TiaPalette.ARGB[0x40],
+        check(pixelAt(pixels, 44, 150) == paletteColor(0x40),
                 "HMOVE shifts missile 1");
-        check(pixelAt(pixels, 55, 150) == TiaPalette.ARGB[0x0F],
+        check(pixelAt(pixels, 55, 150) == paletteColor(0x0F),
                 "HMOVE shifts ball");
     }
 
@@ -526,11 +526,11 @@ public final class AtariTiaTests {
         registers.write(Tia.HMOVE, 0);
         finishFrame(tia);
 
-        check(pixelAt(tia.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(tia.framebufferArgb(), 10, 150) == paletteColor(0x20),
                 "HMCLR clears player 0 motion");
-        check(pixelAt(tia.framebufferArgb(), 20, 150) == TiaPalette.ARGB[0x40],
+        check(pixelAt(tia.framebufferArgb(), 20, 150) == paletteColor(0x40),
                 "HMCLR clears player 1 motion");
-        check(pixelAt(tia.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0],
+        check(pixelAt(tia.framebufferArgb(), 11, 150) == paletteColor(0),
                 "HMCLR leaves old shifted position empty");
     }
 
@@ -543,7 +543,7 @@ public final class AtariTiaTests {
         late.registers().write(Tia.HMP0, 0x10);
         late.registers().write(Tia.HMOVE, 0);
         finishFrame(late);
-        check(pixelAt(late.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(late.framebufferArgb(), 11, 150) == paletteColor(0x20),
                 "late HMOVE still shifts player");
 
         Tia original = new Tia();
@@ -563,7 +563,7 @@ public final class AtariTiaTests {
 
         check(Arrays.equals(original.framebufferArgb(), restored.framebufferArgb()),
                 "restored HMOVE state renders identically");
-        check(pixelAt(restored.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(restored.framebufferArgb(), 11, 150) == paletteColor(0x20),
                 "restored HMOVE keeps shifted position");
     }
 
@@ -659,7 +659,7 @@ public final class AtariTiaTests {
 
         finishFrame(original);
         finishFrame(restored);
-        check(pixelAt(restored.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20],
+        check(pixelAt(restored.framebufferArgb(), 10, 150) == paletteColor(0x20),
                 "restored TIA continues rendering objects");
         check(pixelAt(original.framebufferArgb(), 10, 150)
                         == pixelAt(restored.framebufferArgb(), 10, 150),
@@ -708,6 +708,10 @@ public final class AtariTiaTests {
         long used = (long) tia.scanline() * Atari2600Constants.COLOR_CLOCKS_PER_SCANLINE
                 + tia.colorClock();
         tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME - used);
+    }
+
+    private static int paletteColor(int colorCode) {
+        return TiaPalette.ARGB[(colorCode >> 1) & 0x7F];
     }
 
     private static int pixelAt(int[] pixels, int x, int y) {

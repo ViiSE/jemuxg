@@ -340,6 +340,7 @@ public final class Mos6502 implements Cpu, CpuDebugger {
             case 0xF8 -> setFlagAndReturn(FLAG_DECIMAL, true);
 
             // Unofficial opcodes exercised by nestest
+            case 0xAB -> lax(AddressMode.IMMEDIATE, 2);
             case 0xA7 -> lax(AddressMode.ZERO_PAGE, 3);
             case 0xB7 -> lax(AddressMode.ZERO_PAGE_Y, 4);
             case 0xAF -> lax(AddressMode.ABSOLUTE, 4);
