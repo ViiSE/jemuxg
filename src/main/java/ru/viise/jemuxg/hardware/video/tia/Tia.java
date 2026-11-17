@@ -53,8 +53,80 @@ public final class Tia implements TiaVideo {
     /** PF2: старшие 8 бит playfield. */
     public static final int PF2 = 0x0F;
 
+    /** RESP0: сброс горизонтальной позиции игрока 0. */
+    public static final int RESP0 = 0x10;
+
+    /** RESP1: сброс горизонтальной позиции игрока 1. */
+    public static final int RESP1 = 0x11;
+
+    /** RESM0: сброс горизонтальной позиции ракеты 0. */
+    public static final int RESM0 = 0x12;
+
+    /** RESM1: сброс горизонтальной позиции ракеты 1. */
+    public static final int RESM1 = 0x13;
+
+    /** RESBL: сброс горизонтальной позиции мяча. */
+    public static final int RESBL = 0x14;
+
+    /** GRP0: 8-битный шаблон игрока 0. */
+    public static final int GRP0 = 0x1B;
+
+    /** GRP1: 8-битный шаблон игрока 1. */
+    public static final int GRP1 = 0x1C;
+
+    /** ENAM0: включение ракеты 0 (бит 1). */
+    public static final int ENAM0 = 0x1D;
+
+    /** ENAM1: включение ракеты 1 (бит 1). */
+    public static final int ENAM1 = 0x1E;
+
+    /** ENABL: включение мяча (бит 1). */
+    public static final int ENABL = 0x1F;
+
+    /** NUSIZ0: количество копий и размер игрока/ракеты 0. */
+    public static final int NUSIZ0 = 0x04;
+
+    /** NUSIZ1: количество копий и размер игрока/ракеты 1. */
+    public static final int NUSIZ1 = 0x05;
+
+    /** REFP0: отражение игрока 0 (бит 3). */
+    public static final int REFP0 = 0x0B;
+
+    /** REFP1: отражение игрока 1 (бит 3). */
+    public static final int REFP1 = 0x0C;
+
+    /** VDELP0: вертикальная задержка игрока 0 (бит 0). */
+    public static final int VDELP0 = 0x25;
+
+    /** VDELP1: вертикальная задержка игрока 1 (бит 0). */
+    public static final int VDELP1 = 0x26;
+
+    /** VDELBL: вертикальная задержка мяча (бит 0). */
+    public static final int VDELBL = 0x27;
+
+    /** RESMP0: привязка ракеты 0 к игроку 0 (бит 1). */
+    public static final int RESMP0 = 0x28;
+
+    /** RESMP1: привязка ракеты 1 к игроку 1 (бит 1). */
+    public static final int RESMP1 = 0x29;
+
     private static final int VSYNC_BIT = 0x02;
     private static final int VBLANK_BIT = 0x02;
+
+    /**
+     * Смещения копий по NUSIZ для игроков и ракет.
+     * Индекс — младшие 3 бита NUSIZ.
+     */
+    private static final int[][] COPY_OFFSETS = {
+        {0},
+        {0, 16},
+        {0, 32},
+        {0, 16, 32},
+        {0, 64},
+        {0},
+        {0, 32, 64},
+        {0}
+    };
 
     private final int[] pixels = new int[
             Atari2600Constants.VISIBLE_WIDTH * Atari2600Constants.VISIBLE_HEIGHT];
@@ -72,6 +144,28 @@ public final class Tia implements TiaVideo {
     private int pf0;
     private int pf1;
     private int pf2;
+    private int nusiz0;
+    private int nusiz1;
+    private int refp0;
+    private int refp1;
+    private int grp0Old;
+    private int grp0New;
+    private int grp1Old;
+    private int grp1New;
+    private int enam0;
+    private int enam1;
+    private int enablOld;
+    private int enablNew;
+    private int vdelp0;
+    private int vdelp1;
+    private int vdelbl;
+    private int resmp0;
+    private int resmp1;
+    private int player0X;
+    private int player1X;
+    private int missile0X;
+    private int missile1X;
+    private int ballX;
     private int scanline;
     private int colorClock;
     private boolean wsync;
@@ -117,8 +211,36 @@ public final class Tia implements TiaVideo {
             case PF0 -> pf0 = value & 0xFF;
             case PF1 -> pf1 = value & 0xFF;
             case PF2 -> pf2 = value & 0xFF;
+            case NUSIZ0 -> nusiz0 = value & 0xFF;
+            case NUSIZ1 -> nusiz1 = value & 0xFF;
+            case REFP0 -> refp0 = value & 0xFF;
+            case REFP1 -> refp1 = value & 0xFF;
+            case GRP0 -> {
+                grp0Old = grp0New;
+                grp0New = value & 0xFF;
+            }
+            case GRP1 -> {
+                grp1Old = grp1New;
+                grp1New = value & 0xFF;
+            }
+            case ENAM0 -> enam0 = value & 0xFF;
+            case ENAM1 -> enam1 = value & 0xFF;
+            case ENABL -> {
+                enablOld = enablNew;
+                enablNew = value & 0xFF;
+            }
+            case VDELP0 -> vdelp0 = value & 0xFF;
+            case VDELP1 -> vdelp1 = value & 0xFF;
+            case VDELBL -> vdelbl = value & 0xFF;
+            case RESMP0 -> resmp0 = value & 0xFF;
+            case RESMP1 -> resmp1 = value & 0xFF;
+            case RESP0 -> player0X = currentVisibleX();
+            case RESP1 -> player1X = currentVisibleX();
+            case RESM0 -> missile0X = currentVisibleX();
+            case RESM1 -> missile1X = currentVisibleX();
+            case RESBL -> ballX = currentVisibleX();
             default -> {
-                // Остальные регистры TIA будут добавлены на этапах 4.4-4.6.
+                // Остальные регистры TIA будут добавлены на этапах 4.5-4.6.
             }
         }
     }
@@ -162,6 +284,28 @@ public final class Tia implements TiaVideo {
         pf0 = 0;
         pf1 = 0;
         pf2 = 0;
+        nusiz0 = 0;
+        nusiz1 = 0;
+        refp0 = 0;
+        refp1 = 0;
+        grp0Old = 0;
+        grp0New = 0;
+        grp1Old = 0;
+        grp1New = 0;
+        enam0 = 0;
+        enam1 = 0;
+        enablOld = 0;
+        enablNew = 0;
+        vdelp0 = 0;
+        vdelp1 = 0;
+        vdelbl = 0;
+        resmp0 = 0;
+        resmp1 = 0;
+        player0X = 0;
+        player1X = 0;
+        missile0X = 0;
+        missile1X = 0;
+        ballX = 0;
         scanline = 0;
         colorClock = 0;
         wsync = false;
@@ -254,19 +398,144 @@ public final class Tia implements TiaVideo {
         int colorIndex;
         if (vblank()) {
             colorIndex = 0;
-        } else if (playfieldBit(x) != 0) {
-            if ((ctrlPf & 0x06) == 0x02) {
-                colorIndex = (x < Atari2600Constants.VISIBLE_WIDTH / 2 ? coluP0 : coluP1) & 0x7F;
-            } else {
-                colorIndex = coluPf & 0x7F;
-            }
         } else {
-            colorIndex = coluBk & 0x7F;
+            int playfield = playfieldBit(x);
+            boolean player0 = playerPixel(x, player0X, displayGrp0(), nusiz0, refp0);
+            boolean player1 = playerPixel(x, player1X, displayGrp1(), nusiz1, refp1);
+            boolean missile0 = missilePixel(
+                    x, resmp0, player0X, missile0X, nusiz0, enam0);
+            boolean missile1 = missilePixel(
+                    x, resmp1, player1X, missile1X, nusiz1, enam1);
+            boolean ball = ballPixel(x);
+            int background = coluBk & 0x7F;
+            int playfieldColor = (ctrlPf & 0x06) == 0x02
+                    ? (x < Atari2600Constants.VISIBLE_WIDTH / 2 ? coluP0 : coluP1) & 0x7F
+                    : coluPf & 0x7F;
+
+            if ((ctrlPf & 0x06) == 0x04) {
+                // Приоритет playfield: PF/BL -> P0/M0 -> P1/M1 -> BK.
+                if (playfield != 0) {
+                    colorIndex = coluPf & 0x7F;
+                } else if (ball) {
+                    colorIndex = coluPf & 0x7F;
+                } else if (player0) {
+                    colorIndex = coluP0 & 0x7F;
+                } else if (missile0) {
+                    colorIndex = coluP0 & 0x7F;
+                } else if (player1) {
+                    colorIndex = coluP1 & 0x7F;
+                } else if (missile1) {
+                    colorIndex = coluP1 & 0x7F;
+                } else {
+                    colorIndex = background;
+                }
+            } else if ((ctrlPf & 0x06) == 0x02) {
+                // Score mode: P0/M0 -> PF -> P1/M1 -> BL -> BK.
+                if (player0) {
+                    colorIndex = coluP0 & 0x7F;
+                } else if (missile0) {
+                    colorIndex = coluP0 & 0x7F;
+                } else if (playfield != 0) {
+                    colorIndex = playfieldColor;
+                } else if (player1) {
+                    colorIndex = coluP1 & 0x7F;
+                } else if (missile1) {
+                    colorIndex = coluP1 & 0x7F;
+                } else if (ball) {
+                    colorIndex = coluPf & 0x7F;
+                } else {
+                    colorIndex = background;
+                }
+            } else {
+                // Обычный приоритет: P0/M0 -> P1/M1 -> PF/BL -> BK.
+                if (player0) {
+                    colorIndex = coluP0 & 0x7F;
+                } else if (missile0) {
+                    colorIndex = coluP0 & 0x7F;
+                } else if (player1) {
+                    colorIndex = coluP1 & 0x7F;
+                } else if (missile1) {
+                    colorIndex = coluP1 & 0x7F;
+                } else if (playfield != 0) {
+                    colorIndex = playfieldColor;
+                } else if (ball) {
+                    colorIndex = coluPf & 0x7F;
+                } else {
+                    colorIndex = background;
+                }
+            }
         }
 
         int offset = y * Atari2600Constants.VISIBLE_WIDTH + x;
         pixels[offset] = TiaPalette.ARGB[colorIndex];
         pixelIndices[offset] = (byte) colorIndex;
+    }
+
+    private int currentVisibleX() {
+        if (colorClock < Atari2600Constants.VISIBLE_COLOR_CLOCK_START) {
+            return 0;
+        }
+        return Math.floorMod(
+                colorClock - Atari2600Constants.VISIBLE_COLOR_CLOCK_START,
+                Atari2600Constants.VISIBLE_WIDTH);
+    }
+
+    private int displayGrp0() {
+        return (vdelp0 & 0x01) != 0 ? grp0Old : grp0New;
+    }
+
+    private int displayGrp1() {
+        return (vdelp1 & 0x01) != 0 ? grp1Old : grp1New;
+    }
+
+    private boolean playerPixel(
+            int x, int position, int grp, int nusiz, int refp) {
+        int nusizIndex = nusiz & 0x07;
+        int size = nusizIndex == 5 ? 2 : nusizIndex == 7 ? 4 : 1;
+        int width = 8 * size;
+        boolean reflected = (refp & 0x08) != 0;
+        for (int offset : COPY_OFFSETS[nusizIndex]) {
+            int delta = Math.floorMod(
+                    x - position - offset, Atari2600Constants.VISIBLE_WIDTH);
+            if (delta < width) {
+                int bitIndex = delta / size;
+                int bit = (grp >> (reflected ? bitIndex : 7 - bitIndex)) & 1;
+                if (bit != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean missilePixel(
+            int x, int resmp, int playerPosition, int missilePosition,
+            int nusiz, int enam) {
+        if ((enam & 0x02) == 0) {
+            return false;
+        }
+        int position = (resmp & 0x02) != 0
+                ? playerPosition + 4
+                : missilePosition;
+        int width = 1 << ((nusiz >> 4) & 0x03);
+        int nusizIndex = nusiz & 0x07;
+        for (int offset : COPY_OFFSETS[nusizIndex]) {
+            int delta = Math.floorMod(
+                    x - position - offset, Atari2600Constants.VISIBLE_WIDTH);
+            if (delta < width) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean ballPixel(int x) {
+        int enable = (vdelbl & 0x01) != 0 ? enablOld : enablNew;
+        if ((enable & 0x02) == 0) {
+            return false;
+        }
+        int width = 1 << ((ctrlPf >> 4) & 0x03);
+        return Math.floorMod(x - ballX, Atari2600Constants.VISIBLE_WIDTH) < width;
     }
 
     /**
@@ -319,6 +588,28 @@ public final class Tia implements TiaVideo {
         writer.writeByte(pf0);
         writer.writeByte(pf1);
         writer.writeByte(pf2);
+        writer.writeByte(nusiz0);
+        writer.writeByte(nusiz1);
+        writer.writeByte(refp0);
+        writer.writeByte(refp1);
+        writer.writeByte(grp0Old);
+        writer.writeByte(grp0New);
+        writer.writeByte(grp1Old);
+        writer.writeByte(grp1New);
+        writer.writeByte(enam0);
+        writer.writeByte(enam1);
+        writer.writeByte(enablOld);
+        writer.writeByte(enablNew);
+        writer.writeByte(vdelp0);
+        writer.writeByte(vdelp1);
+        writer.writeByte(vdelbl);
+        writer.writeByte(resmp0);
+        writer.writeByte(resmp1);
+        writer.writeShort(player0X);
+        writer.writeShort(player1X);
+        writer.writeShort(missile0X);
+        writer.writeShort(missile1X);
+        writer.writeShort(ballX);
         writer.writeShort(scanline);
         writer.writeShort(colorClock);
         writer.writeByte(wsync ? 1 : 0);
@@ -337,6 +628,28 @@ public final class Tia implements TiaVideo {
         pf0 = reader.readByte();
         pf1 = reader.readByte();
         pf2 = reader.readByte();
+        nusiz0 = reader.readByte();
+        nusiz1 = reader.readByte();
+        refp0 = reader.readByte();
+        refp1 = reader.readByte();
+        grp0Old = reader.readByte();
+        grp0New = reader.readByte();
+        grp1Old = reader.readByte();
+        grp1New = reader.readByte();
+        enam0 = reader.readByte();
+        enam1 = reader.readByte();
+        enablOld = reader.readByte();
+        enablNew = reader.readByte();
+        vdelp0 = reader.readByte();
+        vdelp1 = reader.readByte();
+        vdelbl = reader.readByte();
+        resmp0 = reader.readByte();
+        resmp1 = reader.readByte();
+        player0X = reader.readShort();
+        player1X = reader.readShort();
+        missile0X = reader.readShort();
+        missile1X = reader.readShort();
+        ballX = reader.readShort();
         scanline = reader.readShort();
         colorClock = reader.readShort();
         wsync = reader.readByte() != 0;

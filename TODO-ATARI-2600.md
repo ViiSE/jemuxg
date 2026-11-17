@@ -128,7 +128,7 @@ PAL/SECAM, педалы/paddles и экзотические мапперы — �
   - 20-битное поле, зеркалирование, повторение;
   - тесты на форму и цвета.
 
-- [ ] 4.4 Players, missiles, ball:
+- [x] 4.4 Players, missiles, ball:
   - `RESP0/1`, `RESM0/1`, `RESBL`;
   - `NUSIZ0/1` — размеры и копии;
   - `REFP0/1`, `VDELP0/1`, `GRP0/1`, `ENAM0/1`, `ENABL`;
