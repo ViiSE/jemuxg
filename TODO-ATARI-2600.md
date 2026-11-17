@@ -121,7 +121,7 @@ PAL/SECAM, педалы/paddles и экзотические мапперы — �
   - сверить эталонные значения со Stella/Mesen;
   - `framebuffer.idx` хранит индекс 0..127.
 
-- [ ] 4.3 Playfield:
+- [x] 4.3 Playfield:
   - `PF0`, `PF1`, `PF2`;
   - `CTRLPF`: reflect, score mode, priority, ball size;
   - `COLUPF`, `COLUBK`;

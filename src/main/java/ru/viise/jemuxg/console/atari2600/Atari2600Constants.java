@@ -64,6 +64,12 @@ public final class Atari2600Constants {
     /** Высота видимой области TIA. */
     public static final int VISIBLE_HEIGHT = 192;
 
+    /** Первый цветовой такт видимой области в строке (после HBLANK). */
+    public static final int VISIBLE_COLOR_CLOCK_START = 68;
+
+    /** Первая строка видимой области в NTSC-кадре. */
+    public static final int VISIBLE_SCANLINE_START = 40;
+
     /** Количество цветов в палитре TIA (7-битный индекс). */
     public static final int TIA_COLOR_COUNT = 128;
 

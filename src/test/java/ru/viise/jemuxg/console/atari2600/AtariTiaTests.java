@@ -1,6 +1,7 @@
 package ru.viise.jemuxg.console.atari2600;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.hardware.VideoFrame;
@@ -20,6 +21,12 @@ public final class AtariTiaTests {
         initialState();
         paletteTable();
         indexFramebuffer();
+        playfieldPatternAndBackground();
+        playfieldReflect();
+        playfieldScoreMode();
+        playfieldVblank();
+        playfieldControlBits();
+        playfieldSaveRestore();
         lineBoundary();
         frameDelivery();
         wsyncStopsCpu();
@@ -77,6 +84,111 @@ public final class AtariTiaTests {
         indices[0] = 127;
         check(tia.framebufferIndices()[0] == 0,
                 "TIA index framebuffer returns a copy");
+    }
+
+    private static void playfieldPatternAndBackground() {
+        Tia tia = new Tia();
+        Bus registers = tia.registers();
+        registers.write(Tia.COLUBK, 0x08);
+        registers.write(Tia.COLUPF, 0x0F);
+        registers.write(Tia.PF0, 0x10);
+        registers.write(Tia.PF1, 0x80);
+        registers.write(Tia.PF2, 0x01);
+
+        tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
+        int[] pixels = tia.framebufferArgb();
+        int pf = TiaPalette.ARGB[0x0F];
+        int bk = TiaPalette.ARGB[0x08];
+
+        check(pixels[0] == pf, "playfield PF0 bit renders");
+        check(pixels[3] == pf, "playfield PF0 spans four pixels");
+        check(pixels[4] == bk, "playfield PF0 ends after four pixels");
+        check(pixels[16] == pf, "playfield PF1 bit renders");
+        check(pixels[20] == bk, "playfield PF1 ends after four pixels");
+        check(pixels[48] == pf, "playfield PF2 bit renders");
+        check(pixels[52] == bk, "playfield PF2 ends after four pixels");
+        check(pixels[80] == pf, "playfield repeats PF0 on right half");
+        check(pixels[96] == pf, "playfield repeats PF1 on right half");
+        check(pixels[128] == pf, "playfield repeats PF2 on right half");
+        byte[] indices = tia.framebufferIndices();
+        check((indices[0] & 0xFF) == 0x0F, "playfield index framebuffer PF color");
+        check((indices[4] & 0xFF) == 0x08, "playfield index framebuffer background color");
+    }
+
+    private static void playfieldReflect() {
+        Tia tia = new Tia();
+        Bus registers = tia.registers();
+        registers.write(Tia.CTRLPF, 0x01);
+        registers.write(Tia.COLUPF, 0x20);
+        registers.write(Tia.PF2, 0x80);
+
+        tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
+        int[] pixels = tia.framebufferArgb();
+        int pf = TiaPalette.ARGB[0x20];
+
+        check(pixels[80] == pf, "reflected playfield starts with PF2 bit 7");
+        check(pixels[83] == pf, "reflected playfield spans four pixels");
+        check(pixels[84] == TiaPalette.ARGB[0], "reflected playfield ends after four pixels");
+        check(tia.controlPf() == 0x01, "CTRLPF reflect bit stored");
+    }
+
+    private static void playfieldScoreMode() {
+        Tia tia = new Tia();
+        Bus registers = tia.registers();
+        registers.write(Tia.CTRLPF, 0x02);
+        registers.write(Tia.COLUP0, 0x20);
+        registers.write(Tia.COLUP1, 0x40);
+        registers.write(Tia.COLUPF, 0x0F);
+        registers.write(Tia.COLUBK, 0x08);
+        registers.write(Tia.PF0, 0x10);
+
+        tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
+        int[] pixels = tia.framebufferArgb();
+
+        check(pixels[0] == TiaPalette.ARGB[0x20], "score mode uses COLUP0 on left");
+        check(pixels[80] == TiaPalette.ARGB[0x40], "score mode uses COLUP1 on right");
+        check(pixels[4] == TiaPalette.ARGB[0x08], "score mode keeps background color");
+    }
+
+    private static void playfieldVblank() {
+        Tia tia = new Tia();
+        Bus registers = tia.registers();
+        registers.write(Tia.VBLANK, 0x02);
+        registers.write(Tia.COLUPF, 0x0F);
+        registers.write(Tia.PF0, 0x10);
+
+        tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
+        check(tia.framebufferArgb()[0] == 0xFF000000, "VBLANK hides playfield");
+    }
+
+    private static void playfieldControlBits() {
+        Tia tia = new Tia();
+        tia.registers().write(Tia.CTRLPF, 0x34);
+        check(tia.controlPf() == 0x34, "CTRLPF priority and ball size bits stored");
+        tia.registers().write(Tia.CTRLPF, 0x00);
+        check(tia.controlPf() == 0x00, "CTRLPF bits cleared");
+    }
+
+    private static void playfieldSaveRestore() {
+        Tia original = new Tia();
+        Bus registers = original.registers();
+        registers.write(Tia.COLUBK, 0x08);
+        registers.write(Tia.COLUPF, 0x0F);
+        registers.write(Tia.PF0, 0x10);
+        original.tick(500);
+
+        BinaryStateWriter writer = new BinaryStateWriter();
+        original.save(writer);
+        Tia restored = new Tia();
+        restored.restore(new BinaryStateReader(writer.toByteArray()));
+
+        long remaining = Atari2600Constants.COLOR_CLOCKS_PER_FRAME - 500;
+        original.tick(remaining);
+        restored.tick(remaining);
+        check(Arrays.equals(original.framebufferArgb(), restored.framebufferArgb()),
+                "restored playfield renders identically");
+        check(restored.framebufferArgb()[0] == TiaPalette.ARGB[0x0F],
+                "restored playfield uses restored color");
     }
 
     private static void lineBoundary() {
