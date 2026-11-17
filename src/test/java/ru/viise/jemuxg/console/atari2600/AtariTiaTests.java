@@ -43,6 +43,7 @@ public final class AtariTiaTests {
         collisionClearAndVblank();
         tiaInput();
         machineControllerWiring();
+        midFrameSaveRestore();
         lineBoundary();
         frameDelivery();
         wsyncStopsCpu();
@@ -633,6 +634,38 @@ public final class AtariTiaTests {
         controller.release(Button.A);
         check(machine.tia().registers().read(Tia.INPT4) == 0x80,
                 "machine routes player 0 fire release to TIA");
+    }
+
+    private static void midFrameSaveRestore() {
+        Tia original = collisionTia(0);
+        original.tick(5L * Atari2600Constants.COLOR_CLOCKS_PER_SCANLINE);
+
+        BinaryStateWriter writer = new BinaryStateWriter();
+        original.save(writer);
+        Tia restored = new Tia();
+        restored.restore(new BinaryStateReader(writer.toByteArray()));
+
+        check(restored.scanline() == original.scanline(), "restore TIA mid-frame scanline");
+        check(restored.colorClock() == original.colorClock(), "restore TIA mid-frame color clock");
+        check(restored.registers().read(Tia.CXPPMM) == 0xC0,
+                "restore TIA collision latches");
+        check(restored.registers().read(Tia.CXBLPF) == 0x80,
+                "restore TIA ball collision latch");
+        restored.registers().write(Tia.CXCLR, 0);
+        check(restored.registers().read(Tia.CXP0FB) == 0,
+                "clearing restored collisions works");
+        check(original.registers().read(Tia.CXP0FB) == 0xC0,
+                "clearing restored collisions leaves original untouched");
+
+        finishFrame(original);
+        finishFrame(restored);
+        check(pixelAt(restored.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20],
+                "restored TIA continues rendering objects");
+        check(pixelAt(original.framebufferArgb(), 10, 150)
+                        == pixelAt(restored.framebufferArgb(), 10, 150),
+                "restored TIA renders same object color");
+        check(restored.frameCount() == original.frameCount(),
+                "restored TIA keeps frame count");
     }
 
     private static Tia collisionTia(int vblank) {
