@@ -61,6 +61,11 @@ public final class AtariFeMapper implements AtariMapper {
         return BANK_COUNT;
     }
 
+    @Override
+    public String debugState() {
+        return "bank=" + bank + " lastAccessWasFe=" + lastAccessWasFe;
+    }
+
     private static boolean inWindow(int address) {
         return address >= Atari2600Constants.CARTRIDGE_BASE
                 && address <= Atari2600Constants.CARTRIDGE_END;

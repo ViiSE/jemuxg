@@ -108,8 +108,15 @@ public final class Atari3EMapper implements AtariMapper {
         return true;
     }
 
+    @Override
     public byte[] ramSnapshot() {
         return ram.clone();
+    }
+
+    @Override
+    public String debugState() {
+        return "romBank=" + romBank + " ramBank=" + ramBank
+                + " ramSelected=" + ramSelected;
     }
 
     private static int cartridgeOffset(int address) {

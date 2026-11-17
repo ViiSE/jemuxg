@@ -126,6 +126,22 @@ debug/<имя-ROM>/frame-<номер>/
 `framebuffer.idx` удобно сравнивать с эталонным эмулятором: он не зависит
 от RGB-палитры и различий в цветовых каналах.
 
+Для Atari 2600 снимок содержит:
+
+```text
+debug/<имя-ROM>/frame-<номер>/
+├── screenshot.png      # скриншот 160×192
+├── framebuffer.argb    # ARGB, 4 байта на пиксель, little-endian
+├── framebuffer.idx     # индекс палитры TIA (0..127), 1 байт на пиксель
+├── riot-ram.bin        # 128 байт RAM RIOT
+├── tia-registers.bin   # 64 регистра TIA (защёлки и текущие позиции)
+├── riot-registers.bin  # 32 регистра RIOT
+├── mapper-ram.bin      # RAM маппера (пустой для схем без RAM)
+├── registers.txt       # CPU, TIA, RIOT, маппер
+├── hashes.txt          # SHA-256 для бинарных файлов
+└── meta.json           # ROM, кадр, размеры, маппер
+```
+
 ## nestest
 
 Для проверки CPU можно запустить диагностический ROM nestest и сравнить его

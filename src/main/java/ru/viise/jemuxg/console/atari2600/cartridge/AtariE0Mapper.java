@@ -55,6 +55,11 @@ public final class AtariE0Mapper implements AtariMapper {
         return BANK_COUNT;
     }
 
+    @Override
+    public String debugState() {
+        return "segments=" + segments[0] + "," + segments[1] + "," + segments[2] + ",7";
+    }
+
     private static boolean inWindow(int address) {
         return address >= Atari2600Constants.CARTRIDGE_BASE
                 && address <= Atari2600Constants.CARTRIDGE_END;

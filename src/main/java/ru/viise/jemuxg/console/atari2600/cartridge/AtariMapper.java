@@ -37,4 +37,18 @@ public interface AtariMapper extends Mapper {
     default int readByte(int address) {
         return -1;
     }
+
+    /**
+     * @return копия RAM маппера; пустой массив, если RAM нет
+     */
+    default byte[] ramSnapshot() {
+        return new byte[0];
+    }
+
+    /**
+     * @return человекочитаемое состояние банков для отладочного снимка
+     */
+    default String debugState() {
+        return "bank=" + bank() + "/" + bankCount();
+    }
 }

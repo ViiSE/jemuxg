@@ -490,6 +490,74 @@ public final class Tia implements TiaVideo {
         return pixelIndices.clone();
     }
 
+    /**
+     * Снимок 64 регистров TIA без побочных эффектов.
+     *
+     * <p>Для регистров-защёлок возвращается записанное значение. В слотах
+     * {@code $10..$14} находятся текущие X-позиции объектов, в
+     * {@code $1B/$1C} — текущие GRP, в {@code $38..$3D} — входы, а в
+     * {@code $30..$37} — защёлки коллизий.</p>
+     */
+    public byte[] registerSnapshot() {
+        byte[] registers = new byte[Atari2600Constants.TIA_REGISTER_COUNT];
+        registers[VSYNC] = (byte) vsyncRegister;
+        registers[VBLANK] = (byte) vblankRegister;
+        registers[WSYNC] = (byte) (wsync ? 1 : 0);
+        registers[NUSIZ0] = (byte) nusiz0;
+        registers[NUSIZ1] = (byte) nusiz1;
+        registers[COLUP0] = (byte) coluP0;
+        registers[COLUP1] = (byte) coluP1;
+        registers[COLUPF] = (byte) coluPf;
+        registers[COLUBK] = (byte) coluBk;
+        registers[CTRLPF] = (byte) ctrlPf;
+        registers[REFP0] = (byte) refp0;
+        registers[REFP1] = (byte) refp1;
+        registers[PF0] = (byte) pf0;
+        registers[PF1] = (byte) pf1;
+        registers[PF2] = (byte) pf2;
+        registers[RESP0] = (byte) player0X;
+        registers[RESP1] = (byte) player1X;
+        registers[RESM0] = (byte) missile0X;
+        registers[RESM1] = (byte) missile1X;
+        registers[RESBL] = (byte) ballX;
+        registers[AUDC0] = (byte) audio.registerValue(AUDC0);
+        registers[AUDC1] = (byte) audio.registerValue(AUDC1);
+        registers[AUDF0] = (byte) audio.registerValue(AUDF0);
+        registers[AUDF1] = (byte) audio.registerValue(AUDF1);
+        registers[AUDV0] = (byte) audio.registerValue(AUDV0);
+        registers[AUDV1] = (byte) audio.registerValue(AUDV1);
+        registers[GRP0] = (byte) grp0New;
+        registers[GRP1] = (byte) grp1New;
+        registers[ENAM0] = (byte) enam0;
+        registers[ENAM1] = (byte) enam1;
+        registers[ENABL] = (byte) enablNew;
+        registers[HMP0] = (byte) hmp0;
+        registers[HMP1] = (byte) hmp1;
+        registers[HMM0] = (byte) hmm0;
+        registers[HMM1] = (byte) hmm1;
+        registers[HMBL] = (byte) hmbl;
+        registers[VDELP0] = (byte) vdelp0;
+        registers[VDELP1] = (byte) vdelp1;
+        registers[VDELBL] = (byte) vdelbl;
+        registers[RESMP0] = (byte) resmp0;
+        registers[RESMP1] = (byte) resmp1;
+        registers[CXM0P] = (byte) cxM0P;
+        registers[CXM1P] = (byte) cxM1P;
+        registers[CXP0FB] = (byte) cxP0FB;
+        registers[CXP1FB] = (byte) cxP1FB;
+        registers[CXM0FB] = (byte) cxM0FB;
+        registers[CXM1FB] = (byte) cxM1FB;
+        registers[CXBLPF] = (byte) cxBLPF;
+        registers[CXPPMM] = (byte) cxPPMM;
+        registers[INPT0] = (byte) 0x80;
+        registers[INPT1] = (byte) 0x80;
+        registers[INPT2] = (byte) 0x80;
+        registers[INPT3] = (byte) 0x80;
+        registers[INPT4] = (byte) fireInput(0);
+        registers[INPT5] = (byte) fireInput(1);
+        return registers;
+    }
+
     @Override
     public void tick(long colorClocks) {
         if (colorClocks < 0) {

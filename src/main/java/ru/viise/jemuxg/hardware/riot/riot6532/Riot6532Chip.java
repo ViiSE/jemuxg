@@ -6,6 +6,7 @@ import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.hardware.Controller;
 import ru.viise.jemuxg.api.hardware.Memory;
 import ru.viise.jemuxg.api.hardware.SwitchPanel;
+import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
  * Микросхема RIOT 6532 целиком: RAM, таймер и порты.
@@ -39,6 +40,30 @@ public final class Riot6532Chip implements Riot6532, Bus {
 
     public RiotPorts ports() {
         return ports;
+    }
+
+    /**
+     * @return копия 128 байт встроенной RAM
+     */
+    public byte[] ramSnapshot() {
+        return ram.snapshot();
+    }
+
+    /**
+     * Снимок регистров RIOT без побочных эффектов.
+     *
+     * <p>Чтение этого массива не сбрасывает флаг таймера, в отличие от
+     * обычного чтения {@code INTIM} через шину.</p>
+     */
+    public byte[] registerSnapshot() {
+        byte[] registers = new byte[Atari2600Constants.RIOT_REGISTER_COUNT];
+        registers[RiotPorts.SWCHA] = (byte) ports.read(RiotPorts.SWCHA);
+        registers[RiotPorts.SWACNT] = (byte) ports.read(RiotPorts.SWACNT);
+        registers[RiotPorts.SWCHB] = (byte) ports.read(RiotPorts.SWCHB);
+        registers[RiotPorts.SWBCNT] = (byte) ports.read(RiotPorts.SWBCNT);
+        registers[RiotTimer.INTIM] = (byte) timer.timer();
+        registers[RiotTimer.INTFLG] = (byte) (timer.underflow() ? 0x80 : 0);
+        return registers;
     }
 
     public void connectPlayer(int port, Controller controller) {

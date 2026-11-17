@@ -65,8 +65,14 @@ public final class AtariSuperChipMapper implements AtariMapper {
         return true;
     }
 
+    @Override
     public byte[] ramSnapshot() {
         return ram.clone();
+    }
+
+    @Override
+    public String debugState() {
+        return base.debugState() + " superChipRam=" + ram.length;
     }
 
     private static boolean isRamWindow(int address) {

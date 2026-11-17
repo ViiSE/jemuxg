@@ -122,8 +122,14 @@ public final class AtariE7Mapper implements AtariMapper {
         return true;
     }
 
+    @Override
     public byte[] ramSnapshot() {
         return ram.clone();
+    }
+
+    @Override
+    public String debugState() {
+        return "lowerBank=" + lowerBank + " ramBank=" + ramBank;
     }
 
     private static int cartridgeOffset(int address) {

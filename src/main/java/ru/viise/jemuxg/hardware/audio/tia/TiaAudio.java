@@ -74,6 +74,24 @@ public final class TiaAudio implements AudioProcessor {
         }
     }
 
+    /**
+     * Текущее значение регистра канала без побочных эффектов.
+     *
+     * @param register {@code AUDC0..AUDV1}
+     * @return значение 0..255 или 0 для неизвестного регистра
+     */
+    public int registerValue(int register) {
+        return switch (register) {
+            case AUDC0 -> channel0.audc;
+            case AUDC1 -> channel1.audc;
+            case AUDF0 -> channel0.audf;
+            case AUDF1 -> channel1.audf;
+            case AUDV0 -> channel0.audv;
+            case AUDV1 -> channel1.audv;
+            default -> 0;
+        };
+    }
+
     @Override
     public void tick(long colorClocks) {
         if (colorClocks < 0) {

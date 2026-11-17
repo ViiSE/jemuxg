@@ -8,6 +8,9 @@ import ru.viise.jemuxg.api.hardware.VideoSink;
 import ru.viise.jemuxg.api.machine.Machine;
 import ru.viise.jemuxg.api.storage.Media;
 import ru.viise.jemuxg.api.storage.StorageSlot;
+import ru.viise.jemuxg.console.atari2600.cartridge.AtariCartridge;
+import ru.viise.jemuxg.console.atari2600.cartridge.AtariMapper;
+import ru.viise.jemuxg.console.atari2600.debug.AtariDebugSnapshot;
 import ru.viise.jemuxg.hardware.cpu.mos6507.Mos6507;
 import ru.viise.jemuxg.hardware.riot.riot6532.Riot6532Chip;
 import ru.viise.jemuxg.hardware.video.tia.Tia;
@@ -150,5 +153,32 @@ public final class Atari2600Machine implements Machine {
 
     public Atari2600Bus bus() {
         return bus;
+    }
+
+    /**
+     * Снимок машины для отладочного дампа. Вызывается на границе кадра.
+     */
+    public AtariDebugSnapshot debugSnapshot() {
+        AtariCartridge cartridge = cartridgeSlot.cartridge();
+        AtariMapper mapper = cartridge == null ? null : cartridge.mapper();
+        return new AtariDebugSnapshot(
+                tia.frameCount(),
+                tia.scanline(),
+                tia.colorClock(),
+                tia.cpuHalted(),
+                videoWidth(),
+                videoHeight(),
+                tia.framebufferArgb(),
+                tia.framebufferIndices(),
+                riot.ramSnapshot(),
+                tia.registerSnapshot(),
+                riot.registerSnapshot(),
+                cpu.registers(),
+                mapper == null ? "none" : mapper.name(),
+                mapper == null ? "" : mapper.debugState(),
+                mapper == null ? -1 : mapper.bank(),
+                mapper == null ? 0 : mapper.bankCount(),
+                mapper != null && mapper.writable(),
+                mapper == null ? new byte[0] : mapper.ramSnapshot());
     }
 }

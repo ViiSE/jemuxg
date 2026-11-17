@@ -208,7 +208,7 @@ PAL/SECAM, педалы/paddles и экзотические мапперы — �
   - F12 — debug snapshot;
   - F2/F3/F4 не конфликтуют с NES-управлением.
 
-- [ ] 7.4 Debug:
+- [x] 7.4 Debug:
   - `AtariDebugger` + `AtariDebugSnapshot`;
   - `screenshot.png`;
   - `framebuffer.argb` и `framebuffer.idx` (0..127);
