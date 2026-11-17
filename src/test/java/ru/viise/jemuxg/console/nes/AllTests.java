@@ -6,6 +6,7 @@ import ru.viise.jemuxg.console.atari2600.AtariCartridgeTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotPortsTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotRamTests;
 import ru.viise.jemuxg.console.atari2600.AtariRiotTimerTests;
+import ru.viise.jemuxg.console.atari2600.AtariTiaAudioTests;
 import ru.viise.jemuxg.console.atari2600.AtariTiaTests;
 
 /**
@@ -29,6 +30,7 @@ public final class AllTests {
         AtariRiotTimerTests.main(args);
         AtariRiotPortsTests.main(args);
         AtariTiaTests.main(args);
+        AtariTiaAudioTests.main(args);
         System.out.println("All jemuxg tests OK");
     }
 }

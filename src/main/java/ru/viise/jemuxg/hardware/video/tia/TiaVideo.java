@@ -1,5 +1,6 @@
 package ru.viise.jemuxg.hardware.video.tia;
 
+import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.hardware.Controller;
 import ru.viise.jemuxg.api.hardware.VideoProcessor;
@@ -40,4 +41,11 @@ public interface TiaVideo extends VideoProcessor {
      * @param controller контроллер; {@code null} отключает порт
      */
     void connectPlayer(int port, Controller controller);
+
+    /**
+     * Подключает аудиовыход TIA.
+     *
+     * @param sink приёмник сэмплов; {@code null} отключает звук
+     */
+    void connectAudio(AudioSink sink);
 }

@@ -3,12 +3,14 @@ package ru.viise.jemuxg.hardware.video.tia;
 import java.util.Arrays;
 import ru.viise.jemuxg.api.debug.StateReader;
 import ru.viise.jemuxg.api.debug.StateWriter;
+import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.hardware.Button;
 import ru.viise.jemuxg.api.hardware.Controller;
 import ru.viise.jemuxg.api.hardware.VideoFrame;
 import ru.viise.jemuxg.api.hardware.VideoSink;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
+import ru.viise.jemuxg.hardware.audio.tia.TiaAudio;
 
 /**
  * Каркас видеочасти TIA для NTSC Atari 2600.
@@ -133,6 +135,16 @@ public final class Tia implements TiaVideo {
     /** HMCLR: очистить все регистры горизонтального движения. */
     public static final int HMCLR = 0x2B;
 
+    /** AUDC0/AUDC1: управление аудиоканалами. */
+    public static final int AUDC0 = 0x15;
+    public static final int AUDC1 = 0x16;
+    /** AUDF0/AUDF1: делители частоты аудиоканалов. */
+    public static final int AUDF0 = 0x17;
+    public static final int AUDF1 = 0x18;
+    /** AUDV0/AUDV1: громкость аудиоканалов. */
+    public static final int AUDV0 = 0x19;
+    public static final int AUDV1 = 0x1A;
+
     /** CXCLR: очистить защёлки коллизий. */
     public static final int CXCLR = 0x2C;
 
@@ -184,6 +196,7 @@ public final class Tia implements TiaVideo {
             Atari2600Constants.VISIBLE_WIDTH * Atari2600Constants.VISIBLE_HEIGHT];
 
     private final byte[] pixelIndices = new byte[pixels.length];
+    private final TiaAudio audio = new TiaAudio();
 
     private VideoSink sink;
     private int vsyncRegister;
@@ -336,6 +349,8 @@ public final class Tia implements TiaVideo {
             case HMBL -> hmbl = value & 0xFF;
             case HMOVE -> applyHmove();
             case HMCLR -> clearHmove();
+            case AUDC0, AUDC1, AUDF0, AUDF1, AUDV0, AUDV1 ->
+                    audio.writeRegister(register, value);
             case CXCLR -> clearCollisions();
             case RESP0 -> player0X = currentVisibleX();
             case RESP1 -> player1X = currentVisibleX();
@@ -419,6 +434,7 @@ public final class Tia implements TiaVideo {
         colorClock = 0;
         wsync = false;
         frameCount = 0;
+        audio.reset();
         clearFramebuffer();
     }
 
@@ -430,6 +446,13 @@ public final class Tia implements TiaVideo {
     @Override
     public void connect(VideoSink sink) {
         this.sink = sink;
+    }
+
+    /**
+     * Подключает аудиовыход TIA.
+     */
+    public void connectAudio(AudioSink sink) {
+        audio.connect(sink);
     }
 
     @Override
@@ -477,6 +500,7 @@ public final class Tia implements TiaVideo {
                 clearFramebuffer();
             }
             colorClock++;
+            audio.tick(1);
             if (colorClock >= Atari2600Constants.COLOR_CLOCKS_PER_SCANLINE) {
                 colorClock = 0;
                 scanline++;
@@ -484,6 +508,7 @@ public final class Tia implements TiaVideo {
                 if (scanline >= Atari2600Constants.SCANLINES_PER_FRAME) {
                     scanline = 0;
                     frameCount++;
+                    audio.flush();
                     emitFrame();
                 }
             } else {
@@ -829,6 +854,7 @@ public final class Tia implements TiaVideo {
         writer.writeShort(colorClock);
         writer.writeByte(wsync ? 1 : 0);
         writer.writeLong(frameCount);
+        audio.save(writer);
     }
 
     @Override
@@ -882,5 +908,6 @@ public final class Tia implements TiaVideo {
         colorClock = reader.readShort();
         wsync = reader.readByte() != 0;
         frameCount = reader.readLong();
+        audio.restore(reader);
     }
 }

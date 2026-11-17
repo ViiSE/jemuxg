@@ -25,8 +25,6 @@ public final class Atari2600Machine implements Machine {
     private final Controller[] controllers = new Controller[CONTROLLER_PORTS];
     private final TiaVideo tia = new Tia();
 
-    private AudioSink audioSink;
-
     public Atari2600Machine() {
         tia.reset();
     }
@@ -48,7 +46,7 @@ public final class Atari2600Machine implements Machine {
 
     @Override
     public void connectAudio(AudioSink sink) {
-        audioSink = sink;
+        tia.connectAudio(sink);
     }
 
     @Override
