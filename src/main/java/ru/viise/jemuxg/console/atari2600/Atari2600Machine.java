@@ -3,18 +3,22 @@ package ru.viise.jemuxg.console.atari2600;
 import java.util.List;
 import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.api.hardware.Controller;
+import ru.viise.jemuxg.api.hardware.SwitchPanel;
 import ru.viise.jemuxg.api.hardware.VideoSink;
 import ru.viise.jemuxg.api.machine.Machine;
 import ru.viise.jemuxg.api.storage.Media;
 import ru.viise.jemuxg.api.storage.StorageSlot;
+import ru.viise.jemuxg.hardware.cpu.mos6507.Mos6507;
+import ru.viise.jemuxg.hardware.riot.riot6532.Riot6532Chip;
 import ru.viise.jemuxg.hardware.video.tia.Tia;
 import ru.viise.jemuxg.hardware.video.tia.TiaVideo;
 
 /**
  * Сборка Atari 2600.
  *
- * <p>Сейчас подключён каркас TIA: развёртка и кадр 160×192. CPU, RIOT и
- * картридж будут связаны с шиной на следующих этапах.</p>
+ * <p>CPU 6507, TIA, RIOT и картридж работают на общей шине. За один такт
+ * CPU TIA получает три цветовых такта, RIOT — один такт CPU. WSYNC
+ * останавливает CPU до конца текущей строки.</p>
  */
 public final class Atari2600Machine implements Machine {
 
@@ -23,7 +27,10 @@ public final class Atari2600Machine implements Machine {
     private final Atari2600CartridgeSlot cartridgeSlot;
     private final List<StorageSlot> slots;
     private final Controller[] controllers = new Controller[CONTROLLER_PORTS];
-    private final TiaVideo tia = new Tia();
+    private final Tia tia = new Tia();
+    private final Riot6532Chip riot = new Riot6532Chip();
+    private final Atari2600Bus bus;
+    private final Mos6507 cpu;
 
     public Atari2600Machine() {
         this(null);
@@ -35,17 +42,27 @@ public final class Atari2600Machine implements Machine {
     public Atari2600Machine(String mapperName) {
         cartridgeSlot = new Atari2600CartridgeSlot(mapperName);
         slots = List.of(cartridgeSlot);
-        tia.reset();
+        bus = new Atari2600Bus(tia.registers(), riot.ram(), riot.registers(), cartridgeSlot);
+        cpu = new Mos6507(bus);
+        reset();
     }
 
     @Override
     public void reset() {
         tia.reset();
+        riot.reset();
+        cpu.reset();
     }
 
     @Override
     public void runFrame() {
-        tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
+        for (int i = 0; i < Atari2600Constants.CPU_CYCLES_PER_FRAME; i++) {
+            if (!tia.cpuHalted() && cartridgeSlot.isPresent()) {
+                cpu.tick(1);
+            }
+            riot.tick(1);
+            tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_CPU_CYCLE);
+        }
     }
 
     @Override
@@ -71,11 +88,20 @@ public final class Atari2600Machine implements Machine {
         }
         controllers[port] = controller;
         tia.connectPlayer(port, controller);
+        riot.connectPlayer(port, controller);
+    }
+
+    /**
+     * Подключает консольные переключатели (Reset, Select, Color/B&amp;W).
+     */
+    public void connectPanel(SwitchPanel panel) {
+        riot.connectPanel(panel);
     }
 
     @Override
     public void insert(int slot, Media media) {
         slot(slot).insert(media);
+        reset();
     }
 
     @Override
@@ -97,5 +123,21 @@ public final class Atari2600Machine implements Machine {
 
     public TiaVideo tia() {
         return tia;
+    }
+
+    public Tia tiaChip() {
+        return tia;
+    }
+
+    public Riot6532Chip riot() {
+        return riot;
+    }
+
+    public Mos6507 cpu() {
+        return cpu;
+    }
+
+    public Atari2600Bus bus() {
+        return bus;
     }
 }
