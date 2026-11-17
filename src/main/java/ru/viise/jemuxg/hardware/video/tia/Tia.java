@@ -12,8 +12,8 @@ import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
  * Каркас видеочасти TIA для NTSC Atari 2600.
  *
  * <p>Сейчас реализованы тайминги развёртки, служебные регистры
- * {@code VSYNC}, {@code VBLANK} и {@code WSYNC}, палитра TIA и playfield.
- * Игроки, ракеты и мяч появятся на следующих этапах.</p>
+ * {@code VSYNC}, {@code VBLANK} и {@code WSYNC}, палитра TIA, playfield,
+ * игроки, ракеты, мяч и горизонтальное движение {@code HMOVE}.</p>
  *
  * <p>Метод {@link #tick(long)} принимает количество <b>цветовых тактов</b>
  * TIA. Один такт CPU равен трём цветовым тактам.</p>
@@ -110,6 +110,27 @@ public final class Tia implements TiaVideo {
     /** RESMP1: привязка ракеты 1 к игроку 1 (бит 1). */
     public static final int RESMP1 = 0x29;
 
+    /** HMP0: горизонтальное движение игрока 0 (старший nibble). */
+    public static final int HMP0 = 0x20;
+
+    /** HMP1: горизонтальное движение игрока 1. */
+    public static final int HMP1 = 0x21;
+
+    /** HMM0: горизонтальное движение ракеты 0. */
+    public static final int HMM0 = 0x22;
+
+    /** HMM1: горизонтальное движение ракеты 1. */
+    public static final int HMM1 = 0x23;
+
+    /** HMBL: горизонтальное движение мяча. */
+    public static final int HMBL = 0x24;
+
+    /** HMOVE: применить горизонтальное движение. */
+    public static final int HMOVE = 0x2A;
+
+    /** HMCLR: очистить все регистры горизонтального движения. */
+    public static final int HMCLR = 0x2B;
+
     private static final int VSYNC_BIT = 0x02;
     private static final int VBLANK_BIT = 0x02;
 
@@ -161,6 +182,11 @@ public final class Tia implements TiaVideo {
     private int vdelbl;
     private int resmp0;
     private int resmp1;
+    private int hmp0;
+    private int hmp1;
+    private int hmm0;
+    private int hmm1;
+    private int hmbl;
     private int player0X;
     private int player1X;
     private int missile0X;
@@ -234,6 +260,13 @@ public final class Tia implements TiaVideo {
             case VDELBL -> vdelbl = value & 0xFF;
             case RESMP0 -> resmp0 = value & 0xFF;
             case RESMP1 -> resmp1 = value & 0xFF;
+            case HMP0 -> hmp0 = value & 0xFF;
+            case HMP1 -> hmp1 = value & 0xFF;
+            case HMM0 -> hmm0 = value & 0xFF;
+            case HMM1 -> hmm1 = value & 0xFF;
+            case HMBL -> hmbl = value & 0xFF;
+            case HMOVE -> applyHmove();
+            case HMCLR -> clearHmove();
             case RESP0 -> player0X = currentVisibleX();
             case RESP1 -> player1X = currentVisibleX();
             case RESM0 -> missile0X = currentVisibleX();
@@ -301,6 +334,11 @@ public final class Tia implements TiaVideo {
         vdelbl = 0;
         resmp0 = 0;
         resmp1 = 0;
+        hmp0 = 0;
+        hmp1 = 0;
+        hmm0 = 0;
+        hmm1 = 0;
+        hmbl = 0;
         player0X = 0;
         player1X = 0;
         missile0X = 0;
@@ -538,6 +576,33 @@ public final class Tia implements TiaVideo {
         return Math.floorMod(x - ballX, Atari2600Constants.VISIBLE_WIDTH) < width;
     }
 
+    private void applyHmove() {
+        player0X = applyMotion(player0X, hmp0);
+        player1X = applyMotion(player1X, hmp1);
+        missile0X = applyMotion(missile0X, hmm0);
+        missile1X = applyMotion(missile1X, hmm1);
+        ballX = applyMotion(ballX, hmbl);
+    }
+
+    /**
+     * Упрощённая модель HMOVE: старший nibble — знаковое смещение -8..+7,
+     * которое применяется к позиции сразу. Пиксельно-точный HMOVE-comb
+     * и восьмипиксельная база аппаратного HMOVE здесь не моделируются.
+     */
+    private static int applyMotion(int position, int register) {
+        int nibble = (register >> 4) & 0x0F;
+        int offset = nibble < 8 ? nibble : nibble - 16;
+        return Math.floorMod(position + offset, Atari2600Constants.VISIBLE_WIDTH);
+    }
+
+    private void clearHmove() {
+        hmp0 = 0;
+        hmp1 = 0;
+        hmm0 = 0;
+        hmm1 = 0;
+        hmbl = 0;
+    }
+
     /**
      * Возвращает бит 20-битного playfield для пикселя x (0..159).
      */
@@ -605,6 +670,11 @@ public final class Tia implements TiaVideo {
         writer.writeByte(vdelbl);
         writer.writeByte(resmp0);
         writer.writeByte(resmp1);
+        writer.writeByte(hmp0);
+        writer.writeByte(hmp1);
+        writer.writeByte(hmm0);
+        writer.writeByte(hmm1);
+        writer.writeByte(hmbl);
         writer.writeShort(player0X);
         writer.writeShort(player1X);
         writer.writeShort(missile0X);
@@ -645,6 +715,11 @@ public final class Tia implements TiaVideo {
         vdelbl = reader.readByte();
         resmp0 = reader.readByte();
         resmp1 = reader.readByte();
+        hmp0 = reader.readByte();
+        hmp1 = reader.readByte();
+        hmm0 = reader.readByte();
+        hmm1 = reader.readByte();
+        hmbl = reader.readByte();
         player0X = reader.readShort();
         player1X = reader.readShort();
         missile0X = reader.readShort();

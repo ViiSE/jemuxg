@@ -33,6 +33,10 @@ public final class AtariTiaTests {
         verticalDelay();
         resmpLocksMissile();
         objectSaveRestore();
+        hmoveOffsets();
+        hmoveAllObjects();
+        hmoveClear();
+        hmoveLateAndSaveRestore();
         lineBoundary();
         frameDelivery();
         wsyncStopsCpu();
@@ -411,6 +415,149 @@ public final class AtariTiaTests {
                 "restored player and missile state renders identically");
         check(pixelAt(restored.framebufferArgb(), 26, 150) == TiaPalette.ARGB[0x20],
                 "restored player keeps NUSIZ copies");
+    }
+
+    private static void hmoveOffsets() {
+        Tia right = new Tia();
+        positionAt(right, Tia.RESP0, 10);
+        right.registers().write(Tia.COLUP0, 0x20);
+        right.registers().write(Tia.GRP0, 0xFF);
+        right.registers().write(Tia.HMP0, 0x10);
+        right.registers().write(Tia.HMOVE, 0);
+        finishFrame(right);
+        check(pixelAt(right.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
+                "HMOVE +1 shifts player right");
+        check(pixelAt(right.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0],
+                "HMOVE +1 clears old player position");
+
+        Tia left = new Tia();
+        positionAt(left, Tia.RESP0, 10);
+        left.registers().write(Tia.COLUP0, 0x20);
+        left.registers().write(Tia.GRP0, 0xFF);
+        left.registers().write(Tia.HMP0, 0xF0);
+        left.registers().write(Tia.HMOVE, 0);
+        finishFrame(left);
+        check(pixelAt(left.framebufferArgb(), 9, 150) == TiaPalette.ARGB[0x20],
+                "HMOVE -1 shifts player left");
+        check(pixelAt(left.framebufferArgb(), 17, 150) == TiaPalette.ARGB[0],
+                "HMOVE -1 clears old player position");
+
+        Tia zero = new Tia();
+        positionAt(zero, Tia.RESP0, 10);
+        zero.registers().write(Tia.COLUP0, 0x20);
+        zero.registers().write(Tia.GRP0, 0xFF);
+        zero.registers().write(Tia.HMOVE, 0);
+        finishFrame(zero);
+        check(pixelAt(zero.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20],
+                "HMOVE with zero motion keeps player position");
+
+        Tia wrap = new Tia();
+        positionAt(wrap, Tia.RESP0, 159);
+        wrap.registers().write(Tia.COLUP0, 0x20);
+        wrap.registers().write(Tia.GRP0, 0xFF);
+        wrap.registers().write(Tia.HMP0, 0x10);
+        wrap.registers().write(Tia.HMOVE, 0);
+        finishFrame(wrap);
+        check(pixelAt(wrap.framebufferArgb(), 0, 150) == TiaPalette.ARGB[0x20],
+                "HMOVE wraps player around right edge");
+        check(pixelAt(wrap.framebufferArgb(), 159, 150) == TiaPalette.ARGB[0],
+                "HMOVE wrap clears old right-edge position");
+    }
+
+    private static void hmoveAllObjects() {
+        Tia tia = new Tia();
+        positionAt(tia, Tia.RESP0, 10);
+        positionAt(tia, Tia.RESP1, 20);
+        positionAt(tia, Tia.RESM0, 30);
+        positionAt(tia, Tia.RESM1, 40);
+        positionAt(tia, Tia.RESBL, 50);
+        Bus registers = tia.registers();
+        registers.write(Tia.COLUP0, 0x20);
+        registers.write(Tia.COLUP1, 0x40);
+        registers.write(Tia.COLUPF, 0x0F);
+        registers.write(Tia.GRP0, 0x80);
+        registers.write(Tia.GRP1, 0x80);
+        registers.write(Tia.ENAM0, 0x02);
+        registers.write(Tia.ENAM1, 0x02);
+        registers.write(Tia.ENABL, 0x02);
+        registers.write(Tia.HMP0, 0x10);
+        registers.write(Tia.HMP1, 0x20);
+        registers.write(Tia.HMM0, 0x30);
+        registers.write(Tia.HMM1, 0x40);
+        registers.write(Tia.HMBL, 0x50);
+        registers.write(Tia.HMOVE, 0);
+        finishFrame(tia);
+
+        int[] pixels = tia.framebufferArgb();
+        check(pixelAt(pixels, 11, 150) == TiaPalette.ARGB[0x20],
+                "HMOVE shifts player 0");
+        check(pixelAt(pixels, 22, 150) == TiaPalette.ARGB[0x40],
+                "HMOVE shifts player 1");
+        check(pixelAt(pixels, 33, 150) == TiaPalette.ARGB[0x20],
+                "HMOVE shifts missile 0");
+        check(pixelAt(pixels, 44, 150) == TiaPalette.ARGB[0x40],
+                "HMOVE shifts missile 1");
+        check(pixelAt(pixels, 55, 150) == TiaPalette.ARGB[0x0F],
+                "HMOVE shifts ball");
+    }
+
+    private static void hmoveClear() {
+        Tia tia = new Tia();
+        positionAt(tia, Tia.RESP0, 10);
+        positionAt(tia, Tia.RESP1, 20);
+        Bus registers = tia.registers();
+        registers.write(Tia.COLUP0, 0x20);
+        registers.write(Tia.COLUP1, 0x40);
+        registers.write(Tia.GRP0, 0x80);
+        registers.write(Tia.GRP1, 0x80);
+        registers.write(Tia.HMP0, 0x10);
+        registers.write(Tia.HMP1, 0x20);
+        registers.write(Tia.HMM0, 0x30);
+        registers.write(Tia.HMM1, 0x40);
+        registers.write(Tia.HMBL, 0x50);
+        registers.write(Tia.HMCLR, 0);
+        registers.write(Tia.HMOVE, 0);
+        finishFrame(tia);
+
+        check(pixelAt(tia.framebufferArgb(), 10, 150) == TiaPalette.ARGB[0x20],
+                "HMCLR clears player 0 motion");
+        check(pixelAt(tia.framebufferArgb(), 20, 150) == TiaPalette.ARGB[0x40],
+                "HMCLR clears player 1 motion");
+        check(pixelAt(tia.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0],
+                "HMCLR leaves old shifted position empty");
+    }
+
+    private static void hmoveLateAndSaveRestore() {
+        Tia late = new Tia();
+        positionAt(late, Tia.RESP0, 10);
+        late.registers().write(Tia.COLUP0, 0x20);
+        late.registers().write(Tia.GRP0, 0xFF);
+        late.tick(100);
+        late.registers().write(Tia.HMP0, 0x10);
+        late.registers().write(Tia.HMOVE, 0);
+        finishFrame(late);
+        check(pixelAt(late.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
+                "late HMOVE still shifts player");
+
+        Tia original = new Tia();
+        positionAt(original, Tia.RESP0, 10);
+        original.registers().write(Tia.COLUP0, 0x20);
+        original.registers().write(Tia.GRP0, 0xFF);
+        original.registers().write(Tia.HMP0, 0x10);
+        original.registers().write(Tia.HMOVE, 0);
+        finishFrame(original);
+
+        BinaryStateWriter writer = new BinaryStateWriter();
+        original.save(writer);
+        Tia restored = new Tia();
+        restored.restore(new BinaryStateReader(writer.toByteArray()));
+        finishFrame(original);
+        finishFrame(restored);
+
+        check(Arrays.equals(original.framebufferArgb(), restored.framebufferArgb()),
+                "restored HMOVE state renders identically");
+        check(pixelAt(restored.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
+                "restored HMOVE keeps shifted position");
     }
 
     private static void positionAt(Tia tia, int register, int x) {
