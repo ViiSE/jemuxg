@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import ru.viise.jemuxg.api.hardware.Bus;
+import ru.viise.jemuxg.api.hardware.Button;
 import ru.viise.jemuxg.api.hardware.VideoFrame;
+import ru.viise.jemuxg.core.input.SimpleController;
 import ru.viise.jemuxg.core.state.BinaryStateReader;
 import ru.viise.jemuxg.core.state.BinaryStateWriter;
 import ru.viise.jemuxg.hardware.video.tia.Tia;
@@ -37,6 +39,10 @@ public final class AtariTiaTests {
         hmoveAllObjects();
         hmoveClear();
         hmoveLateAndSaveRestore();
+        collisions();
+        collisionClearAndVblank();
+        tiaInput();
+        machineControllerWiring();
         lineBoundary();
         frameDelivery();
         wsyncStopsCpu();
@@ -558,6 +564,98 @@ public final class AtariTiaTests {
                 "restored HMOVE state renders identically");
         check(pixelAt(restored.framebufferArgb(), 11, 150) == TiaPalette.ARGB[0x20],
                 "restored HMOVE keeps shifted position");
+    }
+
+    private static void collisions() {
+        Tia tia = collisionTia(0);
+        finishFrame(tia);
+        Bus registers = tia.registers();
+
+        check(registers.read(Tia.CXM0P) == 0xC0, "CXM0P detects M0 with P0/P1");
+        check(registers.read(Tia.CXM1P) == 0xC0, "CXM1P detects M1 with P0/P1");
+        check(registers.read(Tia.CXP0FB) == 0xC0, "CXP0FB detects P0 with PF/BL");
+        check(registers.read(Tia.CXP1FB) == 0xC0, "CXP1FB detects P1 with PF/BL");
+        check(registers.read(Tia.CXM0FB) == 0xC0, "CXM0FB detects M0 with PF/BL");
+        check(registers.read(Tia.CXM1FB) == 0xC0, "CXM1FB detects M1 with PF/BL");
+        check(registers.read(Tia.CXBLPF) == 0x80, "CXBLPF detects ball with PF");
+        check(registers.read(Tia.CXPPMM) == 0xC0, "CXPPMM detects players and missiles");
+        check(registers.read(Tia.CXPPMM) == 0xC0, "collision latch survives repeated read");
+    }
+
+    private static void collisionClearAndVblank() {
+        Tia tia = collisionTia(0);
+        finishFrame(tia);
+        tia.registers().write(Tia.CXCLR, 0);
+        check(tia.registers().read(Tia.CXM0P) == 0, "CXCLR clears M0/P latches");
+        check(tia.registers().read(Tia.CXP0FB) == 0, "CXCLR clears P0/FB latches");
+        check(tia.registers().read(Tia.CXBLPF) == 0, "CXCLR clears ball/PF latch");
+        check(tia.registers().read(Tia.CXPPMM) == 0, "CXCLR clears P/P and M/M latches");
+
+        Tia blanked = collisionTia(0x02);
+        finishFrame(blanked);
+        check(blanked.registers().read(Tia.CXPPMM) == 0, "VBLANK suppresses collisions");
+        check(blanked.registers().read(Tia.CXBLPF) == 0, "VBLANK suppresses ball collision");
+    }
+
+    private static void tiaInput() {
+        Tia tia = new Tia();
+        SimpleController player0 = new SimpleController();
+        SimpleController player1 = new SimpleController();
+        tia.connectPlayer(0, player0);
+        tia.connectPlayer(1, player1);
+        Bus registers = tia.registers();
+
+        check(registers.read(Tia.INPT0) == 0x80, "paddle 0 is released");
+        check(registers.read(Tia.INPT1) == 0x80, "paddle 1 is released");
+        check(registers.read(Tia.INPT2) == 0x80, "paddle 2 is released");
+        check(registers.read(Tia.INPT3) == 0x80, "paddle 3 is released");
+        check(registers.read(Tia.INPT4) == 0x80, "player 0 fire starts released");
+        check(registers.read(Tia.INPT5) == 0x80, "player 1 fire starts released");
+
+        player0.press(Button.A);
+        check(registers.read(Tia.INPT4) == 0, "player 0 fire pressed is low");
+        check(registers.read(Tia.INPT5) == 0x80, "player 0 fire does not affect player 1");
+        player0.release(Button.A);
+        check(registers.read(Tia.INPT4) == 0x80, "player 0 fire release is high");
+
+        player1.press(Button.A);
+        check(registers.read(Tia.INPT5) == 0, "player 1 fire pressed is low");
+        player1.release(Button.A);
+    }
+
+    private static void machineControllerWiring() {
+        Atari2600Machine machine = new Atari2600Machine();
+        SimpleController controller = new SimpleController();
+        machine.connectController(0, controller);
+        controller.press(Button.A);
+        check(machine.tia().registers().read(Tia.INPT4) == 0,
+                "machine routes player 0 fire to TIA");
+        controller.release(Button.A);
+        check(machine.tia().registers().read(Tia.INPT4) == 0x80,
+                "machine routes player 0 fire release to TIA");
+    }
+
+    private static Tia collisionTia(int vblank) {
+        Tia tia = new Tia();
+        positionAt(tia, Tia.RESP0, 10);
+        positionAt(tia, Tia.RESP1, 10);
+        positionAt(tia, Tia.RESM0, 10);
+        positionAt(tia, Tia.RESM1, 10);
+        positionAt(tia, Tia.RESBL, 10);
+        Bus registers = tia.registers();
+        registers.write(Tia.VBLANK, vblank);
+        registers.write(Tia.COLUP0, 0x20);
+        registers.write(Tia.COLUP1, 0x40);
+        registers.write(Tia.COLUPF, 0x0F);
+        registers.write(Tia.COLUBK, 0x08);
+        registers.write(Tia.CTRLPF, 0);
+        registers.write(Tia.PF0, 0x40);
+        registers.write(Tia.GRP0, 0xFF);
+        registers.write(Tia.GRP1, 0xFF);
+        registers.write(Tia.ENAM0, 0x02);
+        registers.write(Tia.ENAM1, 0x02);
+        registers.write(Tia.ENABL, 0x02);
+        return tia;
     }
 
     private static void positionAt(Tia tia, int register, int x) {

@@ -63,6 +63,7 @@ public final class Atari2600Machine implements Machine {
                     "Atari 2600 has " + CONTROLLER_PORTS + " controller ports, got " + port);
         }
         controllers[port] = controller;
+        tia.connectPlayer(port, controller);
     }
 
     @Override

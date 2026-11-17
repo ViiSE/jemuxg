@@ -1,6 +1,7 @@
 package ru.viise.jemuxg.hardware.video.tia;
 
 import ru.viise.jemuxg.api.hardware.Bus;
+import ru.viise.jemuxg.api.hardware.Controller;
 import ru.viise.jemuxg.api.hardware.VideoProcessor;
 
 /**
@@ -31,4 +32,12 @@ public interface TiaVideo extends VideoProcessor {
      * @return остановлен ли CPU записью в WSYNC до конца текущей строки
      */
     boolean cpuHalted();
+
+    /**
+     * Подключает джойстик к порту игрока.
+     *
+     * @param port 0 или 1
+     * @param controller контроллер; {@code null} отключает порт
+     */
+    void connectPlayer(int port, Controller controller);
 }

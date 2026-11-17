@@ -4,6 +4,8 @@ import java.util.Arrays;
 import ru.viise.jemuxg.api.debug.StateReader;
 import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.api.hardware.Bus;
+import ru.viise.jemuxg.api.hardware.Button;
+import ru.viise.jemuxg.api.hardware.Controller;
 import ru.viise.jemuxg.api.hardware.VideoFrame;
 import ru.viise.jemuxg.api.hardware.VideoSink;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
@@ -131,6 +133,35 @@ public final class Tia implements TiaVideo {
     /** HMCLR: очистить все регистры горизонтального движения. */
     public static final int HMCLR = 0x2B;
 
+    /** CXCLR: очистить защёлки коллизий. */
+    public static final int CXCLR = 0x2C;
+
+    /** CXM0P: коллизии missile 0 с player 0/1. */
+    public static final int CXM0P = 0x30;
+    /** CXM1P: коллизии missile 1 с player 0/1. */
+    public static final int CXM1P = 0x31;
+    /** CXP0FB: коллизии player 0 с playfield/ball. */
+    public static final int CXP0FB = 0x32;
+    /** CXP1FB: коллизии player 1 с playfield/ball. */
+    public static final int CXP1FB = 0x33;
+    /** CXM0FB: коллизии missile 0 с playfield/ball. */
+    public static final int CXM0FB = 0x34;
+    /** CXM1FB: коллизии missile 1 с playfield/ball. */
+    public static final int CXM1FB = 0x35;
+    /** CXBLPF: коллизия ball с playfield. */
+    public static final int CXBLPF = 0x36;
+    /** CXPPMM: коллизии player 0/1 и missile 0/1. */
+    public static final int CXPPMM = 0x37;
+
+    /** INPT0..INPT3: paddle-входы. */
+    public static final int INPT0 = 0x38;
+    public static final int INPT1 = 0x39;
+    public static final int INPT2 = 0x3A;
+    public static final int INPT3 = 0x3B;
+    /** INPT4/INPT5: кнопка fire игроков 0/1. */
+    public static final int INPT4 = 0x3C;
+    public static final int INPT5 = 0x3D;
+
     private static final int VSYNC_BIT = 0x02;
     private static final int VBLANK_BIT = 0x02;
 
@@ -187,6 +218,19 @@ public final class Tia implements TiaVideo {
     private int hmm0;
     private int hmm1;
     private int hmbl;
+
+    private int cxM0P;
+    private int cxM1P;
+    private int cxP0FB;
+    private int cxP1FB;
+    private int cxM0FB;
+    private int cxM1FB;
+    private int cxBLPF;
+    private int cxPPMM;
+
+    private Controller controller0;
+    private Controller controller1;
+
     private int player0X;
     private int player1X;
     private int missile0X;
@@ -216,12 +260,37 @@ public final class Tia implements TiaVideo {
         };
     }
 
+    @Override
+    public void connectPlayer(int port, Controller controller) {
+        switch (port) {
+            case 0 -> controller0 = controller;
+            case 1 -> controller1 = controller;
+            default -> throw new IllegalArgumentException("Invalid Atari player port: " + port);
+        }
+    }
+
     private int readRegister(int register) {
         return switch (register) {
             case VSYNC -> vsyncRegister;
             case VBLANK -> vblankRegister;
+            case CXM0P -> cxM0P;
+            case CXM1P -> cxM1P;
+            case CXP0FB -> cxP0FB;
+            case CXP1FB -> cxP1FB;
+            case CXM0FB -> cxM0FB;
+            case CXM1FB -> cxM1FB;
+            case CXBLPF -> cxBLPF;
+            case CXPPMM -> cxPPMM;
+            case INPT0, INPT1, INPT2, INPT3 -> 0x80;
+            case INPT4 -> fireInput(0);
+            case INPT5 -> fireInput(1);
             default -> 0;
         };
+    }
+
+    private int fireInput(int port) {
+        Controller controller = port == 0 ? controller0 : controller1;
+        return controller != null && controller.pressed(Button.A) ? 0x00 : 0x80;
     }
 
     private void writeRegister(int register, int value) {
@@ -267,6 +336,7 @@ public final class Tia implements TiaVideo {
             case HMBL -> hmbl = value & 0xFF;
             case HMOVE -> applyHmove();
             case HMCLR -> clearHmove();
+            case CXCLR -> clearCollisions();
             case RESP0 -> player0X = currentVisibleX();
             case RESP1 -> player1X = currentVisibleX();
             case RESM0 -> missile0X = currentVisibleX();
@@ -339,6 +409,7 @@ public final class Tia implements TiaVideo {
         hmm0 = 0;
         hmm1 = 0;
         hmbl = 0;
+        clearCollisions();
         player0X = 0;
         player1X = 0;
         missile0X = 0;
@@ -445,6 +516,7 @@ public final class Tia implements TiaVideo {
             boolean missile1 = missilePixel(
                     x, resmp1, player1X, missile1X, nusiz1, enam1);
             boolean ball = ballPixel(x);
+            updateCollisions(playfield != 0, player0, player1, missile0, missile1, ball);
             int background = coluBk & 0x7F;
             int playfieldColor = (ctrlPf & 0x06) == 0x02
                     ? (x < Atari2600Constants.VISIBLE_WIDTH / 2 ? coluP0 : coluP1) & 0x7F
@@ -601,6 +673,71 @@ public final class Tia implements TiaVideo {
         hmm0 = 0;
         hmm1 = 0;
         hmbl = 0;
+    }
+
+    private void clearCollisions() {
+        cxM0P = 0;
+        cxM1P = 0;
+        cxP0FB = 0;
+        cxP1FB = 0;
+        cxM0FB = 0;
+        cxM1FB = 0;
+        cxBLPF = 0;
+        cxPPMM = 0;
+    }
+
+    private void updateCollisions(
+            boolean playfield,
+            boolean player0,
+            boolean player1,
+            boolean missile0,
+            boolean missile1,
+            boolean ball) {
+        if (player0 && player1) {
+            cxPPMM |= 0x80;
+        }
+        if (missile0 && missile1) {
+            cxPPMM |= 0x40;
+        }
+        if (player0 && playfield) {
+            cxP0FB |= 0x80;
+        }
+        if (player0 && ball) {
+            cxP0FB |= 0x40;
+        }
+        if (player1 && playfield) {
+            cxP1FB |= 0x80;
+        }
+        if (player1 && ball) {
+            cxP1FB |= 0x40;
+        }
+        if (missile0 && playfield) {
+            cxM0FB |= 0x80;
+        }
+        if (missile0 && ball) {
+            cxM0FB |= 0x40;
+        }
+        if (missile1 && playfield) {
+            cxM1FB |= 0x80;
+        }
+        if (missile1 && ball) {
+            cxM1FB |= 0x40;
+        }
+        if (ball && playfield) {
+            cxBLPF |= 0x80;
+        }
+        if (missile0 && player1) {
+            cxM0P |= 0x80;
+        }
+        if (missile0 && player0) {
+            cxM0P |= 0x40;
+        }
+        if (missile1 && player0) {
+            cxM1P |= 0x80;
+        }
+        if (missile1 && player1) {
+            cxM1P |= 0x40;
+        }
     }
 
     /**
