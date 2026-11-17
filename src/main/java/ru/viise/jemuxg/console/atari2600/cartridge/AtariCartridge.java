@@ -8,17 +8,21 @@ import ru.viise.jemuxg.api.storage.MediaKind;
 import ru.viise.jemuxg.console.atari2600.Atari2600Constants;
 
 /**
- * Картридж Atari 2600 с фиксированной схемой 2K или 4K.
+ * Картридж Atari 2600 с фиксированной схемой 2K/4K или банковыми
+ * схемами F8/F6/F4.
  *
  * <p>Адреса {@code $1000..$1FFF} преобразуются маппером в смещение
  * внутри ROM. Reset-вектор читается из окна картриджа, поэтому для
  * 2K-картриджа он автоматически берётся из зеркала
- * {@code $1FFC..$1FFD}.</p>
+ * {@code $1FFC..$1FFD}, а для банковых схем — из текущего банка.</p>
  */
 public final class AtariCartridge implements Cartridge, Bus {
 
     private static final int TWO_KB = 2 * 1024;
     private static final int FOUR_KB = 4 * 1024;
+    private static final int EIGHT_KB = 8 * 1024;
+    private static final int SIXTEEN_KB = 16 * 1024;
+    private static final int THIRTY_TWO_KB = 32 * 1024;
 
     private final Media media;
     private final AtariMapper mapper;
@@ -30,11 +34,15 @@ public final class AtariCartridge implements Cartridge, Bus {
                     "Atari 2600 accepts cartridge media, got " + media.kind());
         }
         long size = media.size();
-        if (size != TWO_KB && size != FOUR_KB) {
-            throw new IllegalArgumentException(
-                    "Atari 2600 cartridge must be 2K or 4K, got " + size + " bytes");
-        }
-        this.mapper = new AtariFixedMapper((int) size);
+        this.mapper = switch ((int) size) {
+            case TWO_KB, FOUR_KB -> new AtariFixedMapper((int) size);
+            case EIGHT_KB -> new AtariF8Mapper();
+            case SIXTEEN_KB -> new AtariF6Mapper();
+            case THIRTY_TWO_KB -> new AtariF4Mapper();
+            default -> throw new IllegalArgumentException(
+                    "Atari 2600 cartridge must be 2K, 4K, 8K (F8), 16K (F6) or 32K (F4), got "
+                            + size + " bytes");
+        };
     }
 
     @Override
