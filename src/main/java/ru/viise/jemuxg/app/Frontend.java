@@ -27,6 +27,7 @@ import ru.viise.jemuxg.core.registry.ConsoleRegistry;
 import ru.viise.jemuxg.platform.audio.JavaSoundAudioSink;
 import ru.viise.jemuxg.platform.audio.SilentAudioSink;
 import ru.viise.jemuxg.platform.input.SwingKeyboardController;
+import ru.viise.jemuxg.platform.input.SwingKeyboardPanel;
 import ru.viise.jemuxg.platform.video.SwingVideoSink;
 import ru.viise.jemuxg.storage.media.FileMedia;
 
@@ -41,6 +42,7 @@ public final class Frontend {
     private final ConsoleDebugger debugger;
     private final SwingVideoSink video;
     private final SwingKeyboardController keyboard;
+    private final SwingKeyboardPanel panel;
     private final FileMedia media;
     private final AutoCloseable audioCloseable;
     private final JFrame frame;
@@ -80,6 +82,7 @@ public final class Frontend {
         video = new SwingVideoSink();
         SimpleController controller = new SimpleController();
         keyboard = new SwingKeyboardController(controller);
+        panel = new SwingKeyboardPanel();
 
         AudioSink audioSink;
         AutoCloseable closeable = null;
@@ -96,6 +99,7 @@ public final class Frontend {
         machine.connectVideo(video);
         machine.connectAudio(audioSink);
         machine.connectController(0, controller);
+        machine.connectPanel(panel);
         machine.insert(0, media);
 
         frame = new JFrame("jemuxg — " + media.name());
@@ -112,6 +116,7 @@ public final class Frontend {
             @Override
             public void windowLostFocus(WindowEvent event) {
                 keyboard.releaseAll();
+                panel.releaseAll();
             }
 
             @Override
@@ -121,6 +126,7 @@ public final class Frontend {
         });
 
         video.addKeyListener(keyboard);
+        video.addKeyListener(panel);
         video.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent event) {
@@ -134,6 +140,7 @@ public final class Frontend {
             @Override
             public void focusLost(FocusEvent event) {
                 keyboard.releaseAll();
+                panel.releaseAll();
             }
         });
 
@@ -193,6 +200,8 @@ public final class Frontend {
         }
         running = false;
         emulationThread.interrupt();
+        keyboard.releaseAll();
+        panel.releaseAll();
 
         if (audioCloseable != null) {
             try {

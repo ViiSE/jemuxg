@@ -10,8 +10,8 @@ import ru.viise.jemuxg.core.input.SimpleController;
 /**
  * Клавиатура как геймпад.
  * <p>
- * Стрелки — крестовина, Z/A/Space — A, X/S — B, Enter — Start,
- * Shift/Backspace — Select.
+ * Стрелки — крестовина, Z/A/Space — A (на Atari 2600 — fire),
+ * X/S — B, Enter — Start, Shift/Backspace — Select.
  */
 public final class SwingKeyboardController extends KeyAdapter {
 
@@ -37,20 +37,44 @@ public final class SwingKeyboardController extends KeyAdapter {
 
     @Override
     public void keyPressed(KeyEvent event) {
-        Button button = BINDINGS.get(event.getKeyCode());
-        if (button != null) {
-            controller.press(button);
+        if (handleKeyPressed(event.getKeyCode())) {
             event.consume();
         }
     }
 
     @Override
     public void keyReleased(KeyEvent event) {
-        Button button = BINDINGS.get(event.getKeyCode());
-        if (button != null) {
-            controller.release(button);
+        if (handleKeyReleased(event.getKeyCode())) {
             event.consume();
         }
+    }
+
+    /**
+     * Обрабатывает нажатие клавиши без AWT-события.
+     *
+     * @return {@code true}, если клавиша привязана к кнопке контроллера
+     */
+    public boolean handleKeyPressed(int keyCode) {
+        Button button = BINDINGS.get(keyCode);
+        if (button == null) {
+            return false;
+        }
+        controller.press(button);
+        return true;
+    }
+
+    /**
+     * Обрабатывает отпускание клавиши без AWT-события.
+     *
+     * @return {@code true}, если клавиша привязана к кнопке контроллера
+     */
+    public boolean handleKeyReleased(int keyCode) {
+        Button button = BINDINGS.get(keyCode);
+        if (button == null) {
+            return false;
+        }
+        controller.release(button);
+        return true;
     }
 
     /**

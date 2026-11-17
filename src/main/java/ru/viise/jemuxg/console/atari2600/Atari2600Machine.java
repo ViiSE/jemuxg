@@ -94,6 +94,7 @@ public final class Atari2600Machine implements Machine {
     /**
      * Подключает консольные переключатели (Reset, Select, Color/B&amp;W).
      */
+    @Override
     public void connectPanel(SwitchPanel panel) {
         riot.connectPanel(panel);
     }

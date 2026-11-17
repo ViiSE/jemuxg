@@ -195,7 +195,7 @@ PAL/SECAM, педалы/paddles и экзотические мапперы — �
   - flush audio;
   - без wall-clock внутри машины.
 
-- [ ] 7.2 Ввод:
+- [x] 7.2 Ввод:
   - джойстик: стрелки + `A`/`Space` (fire);
   - консольные переключатели: Reset, Select, Color/B&W;
   - клавиши: F2 — Reset, F3 — Select, F4 — Color/B&W;

@@ -2,7 +2,7 @@
 
 # jemuxg
 
-Эмулятор старых консолей. Реализованы NES и каркас Atari 2600.
+Эмулятор старых консолей. Реализованы NES и Atari 2600.
 
 ## Сборка
 
@@ -59,11 +59,14 @@ java -Djava.awt.headless=true -cp target/classes ru.viise.jemuxg.app.Main --smok
 
 | Клавиша | Кнопка |
 | --- | --- |
-| Стрелки | Крестовина |
-| Z / A / Space | A |
+| Стрелки | Крестовина / джойстик |
+| Z / A / Space | A (на Atari 2600 — fire) |
 | X / S | B |
 | Enter | Start |
 | Shift / Backspace | Select |
+| F2 | Atari 2600: Reset |
+| F3 | Atari 2600: Select |
+| F4 | Atari 2600: Color/B&W |
 | F12 | Отладочный снимок |
 
 Звук выводится через `javax.sound.sampled`; при отсутствии аудиоустройства
