@@ -136,8 +136,13 @@ public final class Main {
     private static Path chooseRom() {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Выберите ROM");
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.addChoosableFileFilter(new FileNameExtensionFilter(
+                "Atari 2600 (*.a26)", "a26"));
+        chooser.addChoosableFileFilter(new FileNameExtensionFilter(
+                "NES (*.nes)", "nes"));
         chooser.setFileFilter(new FileNameExtensionFilter(
-                "ROM (*.nes, *.a26)", "nes", "a26"));
+                "Все поддерживаемые ROM (*.nes, *.a26)", "nes", "a26"));
         if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
             return null;
         }

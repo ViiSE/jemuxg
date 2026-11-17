@@ -30,6 +30,21 @@ public interface Machine {
         return 44_100;
     }
 
+    /**
+     * Ширина видеокадра в пикселях. Фронтенд использует её для выбора
+     * начального размера окна с сохранением пропорций.
+     */
+    default int videoWidth() {
+        return 256;
+    }
+
+    /**
+     * Высота видеокадра в пикселях.
+     */
+    default int videoHeight() {
+        return 240;
+    }
+
     void connectController(int port, Controller controller);
 
     /**

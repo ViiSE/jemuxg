@@ -23,12 +23,25 @@ public final class SwingVideoSink extends JPanel implements VideoSink {
     private volatile BufferedImage image;
 
     public SwingVideoSink() {
+        this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    }
+
+    /**
+     * Создаёт панель под конкретное разрешение кадра. Окно получает размер
+     * в {@value #DEFAULT_SCALE} раза больше кадра, а при изменении размера
+     * панели картинка масштабируется с сохранением пропорций.
+     */
+    public SwingVideoSink(int frameWidth, int frameHeight) {
+        if (frameWidth <= 0 || frameHeight <= 0) {
+            throw new IllegalArgumentException(
+                    "Frame size must be positive: " + frameWidth + "x" + frameHeight);
+        }
         setBackground(Color.BLACK);
         setOpaque(true);
         setFocusable(true);
         setPreferredSize(new Dimension(
-                DEFAULT_WIDTH * DEFAULT_SCALE,
-                DEFAULT_HEIGHT * DEFAULT_SCALE));
+                frameWidth * DEFAULT_SCALE,
+                frameHeight * DEFAULT_SCALE));
     }
 
     @Override

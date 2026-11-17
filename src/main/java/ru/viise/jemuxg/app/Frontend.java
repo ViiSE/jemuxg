@@ -79,7 +79,7 @@ public final class Frontend {
                 .create(config);
         machine = console.machine();
         debugger = console.debugger().orElse(null);
-        video = new SwingVideoSink();
+        video = new SwingVideoSink(machine.videoWidth(), machine.videoHeight());
         SimpleController controller = new SimpleController();
         keyboard = new SwingKeyboardController(controller);
         panel = new SwingKeyboardPanel();

@@ -81,6 +81,16 @@ public final class Atari2600Machine implements Machine {
     }
 
     @Override
+    public int videoWidth() {
+        return Atari2600Constants.VISIBLE_WIDTH;
+    }
+
+    @Override
+    public int videoHeight() {
+        return Atari2600Constants.VISIBLE_HEIGHT;
+    }
+
+    @Override
     public void connectController(int port, Controller controller) {
         if (port < 0 || port >= CONTROLLER_PORTS) {
             throw new IllegalArgumentException(
