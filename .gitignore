@@ -7,6 +7,9 @@ target/
 # Log file
 *.log
 
+# Not nestest log
+!/src/test/resources/test-roms/nestest.log
+
 # debug files
 /debug/
 
