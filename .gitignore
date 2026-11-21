@@ -24,6 +24,7 @@ target/
 
 # local ROM collection
 /roms/
+/src/test/resources/test-roms/atari/pitfall2/
 
 # .idea files
 .idea/

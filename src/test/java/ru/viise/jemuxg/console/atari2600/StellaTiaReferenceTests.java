@@ -21,6 +21,10 @@ import ru.viise.jemuxg.storage.media.ByteArrayMedia;
 public final class StellaTiaReferenceTests {
 
     private static final int[] FRAMES = {49, 50, 567};
+    private static final String ROM_RESOURCE =
+            "/test-roms/atari/pitfall2/pitfall2.a26";
+    private static final String FRAME_RESOURCE_PREFIX =
+            "/test-roms/atari/pitfall2/frame-";
 
     private static int checks;
 
@@ -28,15 +32,34 @@ public final class StellaTiaReferenceTests {
     }
 
     public static void main(String[] args) throws Exception {
+        if (!referenceAvailable()) {
+            System.out.println(
+                    "Stella TIA reference tests skipped: "
+                            + "Pitfall II fixture is not present");
+            return;
+        }
         runReference();
         System.out.println("Stella TIA reference tests OK, checks=" + checks);
+    }
+
+    private static boolean referenceAvailable() {
+        if (StellaTiaReferenceTests.class.getResource(ROM_RESOURCE) == null) {
+            return false;
+        }
+        for (int frame : FRAMES) {
+            if (StellaTiaReferenceTests.class.getResource(
+                    FRAME_RESOURCE_PREFIX + frame + ".idx") == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static void runReference() throws Exception {
         Atari2600CartridgeSlot slot = new Atari2600CartridgeSlot();
         slot.insert(new ByteArrayMedia(
                 "pitfall2.a26", MediaKind.CARTRIDGE,
-                readResource("/test-roms/atari/pitfall2/pitfall2.a26")));
+                readResource(ROM_RESOURCE)));
 
         StellaTia tia = new StellaTia();
         Riot6532Chip riot = new Riot6532Chip();
@@ -58,7 +81,7 @@ public final class StellaTiaReferenceTests {
                     + tia.player0().position() + " P1 pos="
                     + tia.player1().position());
             byte[] expected = readResource(
-                    "/test-roms/atari/pitfall2/frame-" + target + ".idx");
+                    FRAME_RESOURCE_PREFIX + target + ".idx");
             if (target <= 50) {
                 compare(target, actual, expected);
                 checkTitleText(target, actual);

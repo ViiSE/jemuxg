@@ -41,8 +41,8 @@ public final class StellaTiaMachineTests {
         List<VideoFrame> frames = new ArrayList<>();
         machine.connectVideo(frames::add);
         machine.insert(0, new ByteArrayMedia(
-                "pitfall2.a26", MediaKind.CARTRIDGE,
-                readResource("/test-roms/atari/pitfall2/pitfall2.a26")));
+                "colors_ntsc.a26", MediaKind.CARTRIDGE,
+                readResource("/test-roms/atari/colors_ntsc.a26")));
         machine.runFrame();
         machine.runFrame();
         check(frames.size() >= 1, "Stella TIA emits video frames");
@@ -98,8 +98,8 @@ public final class StellaTiaMachineTests {
     private static void stateRoundTrip() {
         Atari2600Machine machine = new Atari2600Machine();
         machine.insert(0, new ByteArrayMedia(
-                "pitfall2.a26", MediaKind.CARTRIDGE,
-                readResource("/test-roms/atari/pitfall2/pitfall2.a26")));
+                "colors_ntsc.a26", MediaKind.CARTRIDGE,
+                readResource("/test-roms/atari/colors_ntsc.a26")));
         List<VideoFrame> frames = new ArrayList<>();
         machine.connectVideo(frames::add);
         machine.runCycles(10_000);
