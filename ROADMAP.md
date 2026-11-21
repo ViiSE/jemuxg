@@ -9,7 +9,8 @@
 - [x] **Atari 2600** — 6507, RIOT 6532, TIA (цикл-точный порт Stella),
   мапперы, аналоговые paddle, save/restore.
 - [x] **Sega SG-1000** — Z80, TMS9918A, SN76489, ввод, save/restore,
-  отладка; запуск проверен на Bomb Jack и H.E.R.O.
+  отладка; запуск проверен на Bomb Jack, H.E.R.O., Flicky, Girl's Garden,
+  Monaco GP, Zaxxon, Q-bert и Hustle Chumy.
 
 ## Принципы приоритезации
 
@@ -183,7 +184,7 @@ N64 — RSP/RDP с микрокодом, то есть фактически ну
 - [x] Каркас SG-1000: провайдер, слот, 256×192, `.sg`/`.sc`.
 - [x] Z80-ядро + тесты.
 - [x] Память и картриджи SG-1000: ROM `$0000–$BFFF`, RAM 1 КБ с
-      зеркалами, 8/16/24/32/48 КБ и Sega My Card.
+      зеркалами, 8–48 КБ кратно 8 КБ и Sega My Card.
 - [x] TMS9918A: текстовый режим, graphics I/II, multicolor, sprites,
       collision, VBlank IRQ и save/restore.
 - [x] SN76489: 3 тона + шум, таблица громкости, LFSR, save/restore.
@@ -193,7 +194,8 @@ N64 — RSP/RDP с микрокодом, то есть фактически ну
 - [x] Отладка SG-1000: `Sg1000Debugger`, RAM/VRAM/VDP/PSG,
       framebuffer и F12-снимок.
 - [x] Sega SG-1000: полная интеграция, save/restore, отладка и запуск
-      игр (Bomb Jack, H.E.R.O.; остальные требуют ROM).
+      игр (Bomb Jack, H.E.R.O., Flicky, Girl's Garden, Monaco GP, Zaxxon,
+      Q-bert, Hustle Chumy; остальные требуют ROM).
 - [ ] ColecoVision: BIOS, кейпад, спиннер, save/restore.
 
 ### Этап 2. Портативные и Sega (ориентир: 1–2 месяца)

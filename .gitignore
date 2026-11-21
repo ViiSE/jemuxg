@@ -19,6 +19,9 @@ target/
 # .sg files
 /*.sg
 
+# local ROM collection
+/roms/
+
 # .idea files
 .idea/
 

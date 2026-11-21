@@ -21,15 +21,22 @@ import ru.viise.jemuxg.storage.media.FileMedia;
 /**
  * Опциональный дымовой тест на реальных ROM SG-1000.
  *
- * <p>ROM не входят в репозиторий. Тест ищет их рядом с рабочим каталогом
- * или принимает пути аргументами / через {@code -Djemuxg.sg1000.rom}.
- * Если файлов нет, тест пропускается.</p>
+ * <p>ROM не входят в репозиторий. Тест ищет их в {@code roms/sg1000}
+ * рядом с рабочим каталогом (или в старом месте в корне) и принимает пути
+ * аргументами / через {@code -Djemuxg.sg1000.rom}. Если файлов нет,
+ * тест пропускается.</p>
  */
 public final class Sg1000RomTests {
 
     private static final String[] DEFAULT_ROMS = {
         "Bomb Jack (Japan).sg",
-        "H.E.R.O. (Japan).sg"
+        "H.E.R.O. (Japan).sg",
+        "Flicky (Japan).sg",
+        "Girl's Garden (Japan).sg",
+        "Monaco GP (Japan).sg",
+        "Zaxxon (Japan).sg",
+        "Q-bert (Japan) (Othello Multivision).sg",
+        "Hustle Chumy (Japan).sg"
     };
 
     private static int checks;
@@ -71,7 +78,10 @@ public final class Sg1000RomTests {
             return roms;
         }
         for (String name : DEFAULT_ROMS) {
-            Path path = Path.of(name);
+            Path path = Path.of("roms", "sg1000", name);
+            if (!Files.isRegularFile(path)) {
+                path = Path.of(name);
+            }
             if (Files.isRegularFile(path)) {
                 roms.add(path);
             }

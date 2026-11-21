@@ -10,20 +10,12 @@ import ru.viise.jemuxg.console.sg1000.Sg1000Constants;
 /**
  * Картридж Sega SG-1000.
  *
- * <p>Поддерживается линейный ROM размером 8, 16, 24, 32 или 48 КБ.
- * ROM отображается с {@code $0000}; адреса за его пределами читаются
- * как {@code $FF}. Sega My Card (32 КБ) ничем не отличается от
- * обычного картриджа. BIOS и заголовка нет.</p>
+ * <p>Поддерживается линейный ROM размером от 8 до 48 КБ кратно 8 КБ,
+ * включая 8, 16, 24, 32, 40 и 48 КБ. ROM отображается с {@code $0000};
+ * адреса за его пределами читаются как {@code $FF}. Sega My Card (32 КБ)
+ * ничем не отличается от обычного картриджа. BIOS и заголовка нет.</p>
  */
 public final class Sg1000Cartridge implements Cartridge, Bus {
-
-    private static final int[] SUPPORTED_SIZES = {
-        Sg1000Constants.ROM_BANK_SIZE,
-        2 * Sg1000Constants.ROM_BANK_SIZE,
-        3 * Sg1000Constants.ROM_BANK_SIZE,
-        Sg1000Constants.MY_CARD_ROM_SIZE,
-        Sg1000Constants.MAX_ROM_SIZE
-    };
 
     private static final Mapper LINEAR_ROM = new Mapper() {
         @Override
@@ -42,18 +34,15 @@ public final class Sg1000Cartridge implements Cartridge, Bus {
         long size = media.size();
         if (!isSupportedSize(size)) {
             throw new IllegalArgumentException(
-                    "SG-1000 ROM size must be 8, 16, 24, 32 or 48 KB, got " + size);
+                    "SG-1000 ROM size must be 8..48 KB in 8 KB steps, got " + size);
         }
         this.media = media;
     }
 
     private static boolean isSupportedSize(long size) {
-        for (int supported : SUPPORTED_SIZES) {
-            if (size == supported) {
-                return true;
-            }
-        }
-        return false;
+        return size >= Sg1000Constants.MIN_ROM_SIZE
+                && size <= Sg1000Constants.MAX_ROM_SIZE
+                && size % Sg1000Constants.ROM_BANK_SIZE == 0;
     }
 
     /**

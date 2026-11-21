@@ -4,7 +4,8 @@
 
 Эмулятор старых консолей. Реализованы NES, Atari 2600 и Sega SG-1000.
 Для SG-1000 поддерживаются NTSC-картриджи `.sg`/`.sc`; запуск проверен
-на Bomb Jack и H.E.R.O.
+на Bomb Jack, H.E.R.O., Flicky, Girl's Garden, Monaco GP, Zaxxon, Q-bert
+и Hustle Chumy.
 
 ## Сборка
 
@@ -31,6 +32,14 @@ java -cp target/classes ru.viise.jemuxg.app.Main game.a26
 java -cp target/classes ru.viise.jemuxg.app.Main game.sg
 # или
 java -cp target/classes ru.viise.jemuxg.app.Main --rom game.nes
+```
+
+Локальную коллекцию удобно держать в `roms/nes`, `roms/atari2600` и
+`roms/sg1000` — папка `roms/` исключена из git, чтобы не коммитить ROM.
+Например:
+
+```bash
+java -cp target/classes ru.viise.jemuxg.app.Main "roms/sg1000/Bomb Jack (Japan).sg"
 ```
 
 Для неоднозначных файлов консоль можно указать явно:
@@ -146,7 +155,7 @@ Stella: задержки регистров, playfield/player/missile/ball, VDEL
 команды, префиксы CB/ED/DD/FD/DDCB/FDCB, флаги, такты, прерывания и
 тесты всех групп команд. Z80 подключён к карте памяти: ROM
 `$0000–$BFFF`, RAM 1 КБ в `$C000–$C3FF` с зеркалами до `$FFFF`,
-картриджи 8/16/24/32/48 КБ и Sega My Card.
+картриджи 8–48 КБ кратно 8 КБ (включая 40 КБ) и Sega My Card.
 
 Видеоядро TMS9918A готово: 16 КБ VRAM, порты `$BE/$BF` с зеркалами,
 режимы Graphics I/II, Multicolor и Text, 32 спрайта с увеличением,
@@ -158,18 +167,18 @@ P1/P2 через `$DC/$DD` с зеркалами, активный низкий 
 F2. Машина поддерживает полный save/restore (Z80, RAM, VDP, PSG, позиция
 внутри кадра, счётчики и картридж), поэтому F10/↑/↓ работают и для SG-1000.
 F12 сохраняет отладочный снимок с Z80/VDP/PSG, RAM, VRAM и framebuffer в
-`debug/<rom>/frame-N/`. Запуск проверен на Bomb Jack и H.E.R.O.; другие
-игры требуют ROM и отдельной проверки. Подробный план — `todos/TODO-SG-1000.md`.
+`debug/<rom>/frame-N/`. Запуск проверен на Bomb Jack, H.E.R.O., Flicky,
+Girl's Garden, Monaco GP, Zaxxon, Q-bert и Hustle Chumy; другие игры
+требуют ROM. Подробный план — `todos/TODO-SG-1000.md`.
 
 Ограничения SG-1000:
 
 - только NTSC, без PAL/SECAM;
 - нет SC-3000 (клавиатура, BASIC), кассет и расширений RAM;
-- дампы 40 КБ не поддерживаются;
 - тайминги доступа к VRAM 8/2 мкс не блокируют CPU;
 - save/restore проверяет картридж по размеру и имени, не по хэшу;
 - эталонные скриншоты автоматизированы только для синтетического ROM и
-  smoke-тестов Bomb Jack/H.E.R.O.
+  smoke-тестов семи игр.
 
 ## Отладка
 

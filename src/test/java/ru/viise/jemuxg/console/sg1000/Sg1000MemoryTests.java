@@ -88,6 +88,7 @@ public final class Sg1000MemoryTests {
             2 * Sg1000Constants.ROM_BANK_SIZE,
             3 * Sg1000Constants.ROM_BANK_SIZE,
             Sg1000Constants.MY_CARD_ROM_SIZE,
+            5 * Sg1000Constants.ROM_BANK_SIZE,
             Sg1000Constants.MAX_ROM_SIZE
         };
         for (int size : sizes) {
@@ -111,7 +112,7 @@ public final class Sg1000MemoryTests {
     }
 
     private static void invalidCartridges() {
-        int[] invalidSizes = {0, 0x1000, 0x2001, 0xA000, 0xC001, 0x10000};
+        int[] invalidSizes = {0, 0x1000, 0x2001, 0x3000, 0xC001, 0x10000};
         for (int size : invalidSizes) {
             boolean rejected = false;
             try {
