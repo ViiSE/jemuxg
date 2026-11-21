@@ -21,8 +21,8 @@ public final class AtariReferenceTests {
     }
 
     public static void main(String[] args) throws Exception {
-        compare("colors", 4);
-        compare("score-mode", 3);
+        compare("colors", 37);
+        compare("score-mode", 41);
         System.out.println("Atari reference ROM tests OK, checks=" + checks);
     }
 

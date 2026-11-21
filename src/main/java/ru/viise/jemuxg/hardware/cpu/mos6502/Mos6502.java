@@ -94,6 +94,13 @@ public final class Mos6502 implements Cpu, CpuDebugger {
         nmiPending = false;
     }
 
+    /**
+     * @return true, если текущая инструкция завершена
+     */
+    public boolean instructionComplete() {
+        return remainingCycles == 0;
+    }
+
     @Override
     public void tick(long cycles) {
         while (cycles > 0) {

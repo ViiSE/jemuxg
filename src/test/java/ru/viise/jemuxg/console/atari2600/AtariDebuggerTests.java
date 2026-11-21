@@ -10,7 +10,7 @@ import ru.viise.jemuxg.api.console.ConsoleConfig;
 import ru.viise.jemuxg.api.storage.MediaKind;
 import ru.viise.jemuxg.console.atari2600.debug.AtariDebugger;
 import ru.viise.jemuxg.core.debug.FileDebugSession;
-import ru.viise.jemuxg.hardware.video.tia.Tia;
+import ru.viise.jemuxg.hardware.video.tia.StellaTia;
 import ru.viise.jemuxg.hardware.video.tia.TiaPalette;
 import ru.viise.jemuxg.storage.media.ByteArrayMedia;
 
@@ -71,10 +71,10 @@ public final class AtariDebuggerTests {
         check(centerArgb == TiaPalette.ARGB[0x23], "ARGB buffer contains TIA palette color");
 
         check((riotRam[0x00] & 0xFF) == 0xAA, "RIOT RAM byte captured");
-        check((tiaRegisters[Tia.COLUBK] & 0xFF) == 0x46, "TIA COLUBK register captured");
-        check((tiaRegisters[Tia.AUDC0] & 0xFF) == 0x0F, "TIA AUDC0 register captured");
-        check((tiaRegisters[Tia.AUDF0] & 0xFF) == 0x05, "TIA AUDF0 register captured");
-        check((tiaRegisters[Tia.AUDV0] & 0xFF) == 0x08, "TIA AUDV0 register captured");
+        check((tiaRegisters[StellaTia.COLUBK] & 0xFF) == 0x46, "TIA COLUBK register captured");
+        check((tiaRegisters[StellaTia.AUDC0] & 0xFF) == 0x0F, "TIA AUDC0 register captured");
+        check((tiaRegisters[StellaTia.AUDF0] & 0xFF) == 0x05, "TIA AUDF0 register captured");
+        check((tiaRegisters[StellaTia.AUDV0] & 0xFF) == 0x08, "TIA AUDV0 register captured");
         check((riotRegisters[0x02] & 0xFF) == 0x3F, "RIOT SWCHB register captured");
         check((riotRegisters[0x14] & 0xFF) > 0, "RIOT timer captured");
 

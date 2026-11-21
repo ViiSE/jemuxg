@@ -115,7 +115,7 @@ public final class AtariMachineTests {
 
         machine.runFrame();
 
-        check(machine.riot().ram().read(0x80) == 0xFB, "joystick LEFT reaches SWCHA");
+        check(machine.riot().ram().read(0x80) == 0xBF, "joystick LEFT reaches SWCHA");
         check(machine.riot().ram().read(0x81) == 0x35, "console switches reach SWCHB");
     }
 

@@ -83,4 +83,23 @@ public final class SwingKeyboardController extends KeyAdapter {
     public void releaseAll() {
         controller.releaseAll();
     }
+
+    /**
+     * Двигает аналоговую ручку paddle, пока удерживаются стрелки
+     * влево/вправо. Вызывается из цикла эмуляции перед кадром.
+     */
+    public void advancePaddle() {
+        int delta = 0;
+        // На реальном paddle увеличение сопротивления соответствует
+        // повороту влево; игра переводит его в движение платформы вправо.
+        if (controller.pressed(Button.LEFT)) {
+            delta += 16;
+        }
+        if (controller.pressed(Button.RIGHT)) {
+            delta -= 16;
+        }
+        if (delta != 0) {
+            controller.advancePaddle(delta);
+        }
+    }
 }

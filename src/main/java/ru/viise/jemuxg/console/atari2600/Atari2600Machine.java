@@ -6,6 +6,7 @@ import ru.viise.jemuxg.api.debug.StateReader;
 import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.api.hardware.Controller;
+import ru.viise.jemuxg.api.hardware.PaddleController;
 import ru.viise.jemuxg.api.hardware.SwitchPanel;
 import ru.viise.jemuxg.api.hardware.VideoSink;
 import ru.viise.jemuxg.api.machine.Machine;
@@ -16,8 +17,7 @@ import ru.viise.jemuxg.console.atari2600.cartridge.AtariMapper;
 import ru.viise.jemuxg.console.atari2600.debug.AtariDebugSnapshot;
 import ru.viise.jemuxg.hardware.cpu.mos6507.Mos6507;
 import ru.viise.jemuxg.hardware.riot.riot6532.Riot6532Chip;
-import ru.viise.jemuxg.hardware.video.tia.Tia;
-import ru.viise.jemuxg.hardware.video.tia.TiaVideo;
+import ru.viise.jemuxg.hardware.video.tia.StellaTiaVideo;
 
 /**
  * Сборка Atari 2600.
@@ -30,12 +30,12 @@ public final class Atari2600Machine implements Machine, Stateful {
 
     private static final int CONTROLLER_PORTS = 2;
     private static final int STATE_MAGIC = 0x4A4D5831;
-    private static final int STATE_VERSION = 1;
+    private static final int STATE_VERSION = 3;
 
     private final Atari2600CartridgeSlot cartridgeSlot;
     private final List<StorageSlot> slots;
     private final Controller[] controllers = new Controller[CONTROLLER_PORTS];
-    private final Tia tia = new Tia();
+    private final StellaTiaVideo tia = new StellaTiaVideo();
     private final Riot6532Chip riot = new Riot6532Chip();
     private final Atari2600Bus bus;
     private final Mos6507 cpu;
@@ -50,7 +50,8 @@ public final class Atari2600Machine implements Machine, Stateful {
     public Atari2600Machine(String mapperName) {
         cartridgeSlot = new Atari2600CartridgeSlot(mapperName);
         slots = List.of(cartridgeSlot);
-        bus = new Atari2600Bus(tia.registers(), riot.ram(), riot.registers(), cartridgeSlot);
+        bus = new Atari2600Bus(
+                tia.registers(), riot.ram(), riot.registers(), cartridgeSlot, true);
         cpu = new Mos6507(bus);
         reset();
     }
@@ -76,11 +77,19 @@ public final class Atari2600Machine implements Machine, Stateful {
             throw new IllegalArgumentException("cpuCycles must be non-negative: " + cpuCycles);
         }
         for (int i = 0; i < cpuCycles; i++) {
-            if (!tia.cpuHalted() && cartridgeSlot.isPresent()) {
+            boolean cpuStep = !tia.cpuHalted() && cartridgeSlot.isPresent();
+            if (cpuStep) {
                 cpu.tick(1);
+                if (cpu.instructionComplete()) {
+                    bus.flushPendingWrites();
+                }
             }
             riot.tick(1);
             tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_CPU_CYCLE);
+            AtariCartridge cartridge = cartridgeSlot.cartridge();
+            if (cartridge != null) {
+                cartridge.mapper().tick(1);
+            }
         }
     }
 
@@ -166,6 +175,9 @@ public final class Atari2600Machine implements Machine, Stateful {
         controllers[port] = controller;
         tia.connectPlayer(port, controller);
         riot.connectPlayer(port, controller);
+        if (controller instanceof PaddleController paddle) {
+            tia.connectPaddle(port, paddle);
+        }
     }
 
     /**
@@ -199,11 +211,11 @@ public final class Atari2600Machine implements Machine, Stateful {
         return slots;
     }
 
-    public TiaVideo tia() {
+    public StellaTiaVideo tia() {
         return tia;
     }
 
-    public Tia tiaChip() {
+    public StellaTiaVideo stellaTiaChip() {
         return tia;
     }
 

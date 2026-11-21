@@ -16,7 +16,7 @@ https://github.com/ajoneil/missingno/tree/master/crates/systems/vcs/tests/accura
 
 PNG содержат больше строк, чем видимое поле jemuxg (192 строки).
 `AtariReferenceTests` сравнивает RGB кадр эмулятора с вертикальным срезом
-эталона: для `colors` смещение 4 строки, для `score-mode` — 3 строки.
+эталона: для `colors` смещение 37 строк, для `score-mode` — 41 строка.
 Сравнение точное, без допуска на разницу палитры: эмулятор использует ту же
 NTSC-палитру Stella, что и эталон.
 

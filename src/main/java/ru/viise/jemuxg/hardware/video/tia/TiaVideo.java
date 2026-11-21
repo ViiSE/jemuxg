@@ -3,6 +3,7 @@ package ru.viise.jemuxg.hardware.video.tia;
 import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.hardware.Controller;
+import ru.viise.jemuxg.api.hardware.PaddleController;
 import ru.viise.jemuxg.api.hardware.VideoProcessor;
 
 /**
@@ -41,6 +42,14 @@ public interface TiaVideo extends VideoProcessor {
      * @param controller контроллер; {@code null} отключает порт
      */
     void connectPlayer(int port, Controller controller);
+
+    /**
+     * Подключает paddle к аналоговому входу {@code INPT0..INPT3}.
+     *
+     * @param port 0..3
+     * @param paddle контроллер; {@code null} отключает вход
+     */
+    void connectPaddle(int port, PaddleController paddle);
 
     /**
      * Подключает аудиовыход TIA.

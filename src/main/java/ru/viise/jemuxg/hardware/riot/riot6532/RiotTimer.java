@@ -29,6 +29,9 @@ public final class RiotTimer implements Component, Clocked, Stateful {
 
     public static final int INTIM = 0x14;
     public static final int INTFLG = 0x15;
+    /** Псевдонимы RIOT для чтения через {@code $0284/$0285}. */
+    public static final int INTIM_MIRROR = 0x04;
+    public static final int INTFLG_MIRROR = 0x05;
 
     private static final int REGISTER_MASK = 0x1F;
 
@@ -121,12 +124,12 @@ public final class RiotTimer implements Component, Clocked, Stateful {
     private int readRegister(int address) {
         int register = address & REGISTER_MASK;
         return switch (register) {
-            case INTIM -> {
+            case INTIM, INTIM_MIRROR -> {
                 int value = timer;
                 underflow = false;
                 yield value;
             }
-            case INTFLG -> underflow ? 0x80 : 0x00;
+            case INTFLG, INTFLG_MIRROR -> underflow ? 0x80 : 0x00;
             default -> 0;
         };
     }

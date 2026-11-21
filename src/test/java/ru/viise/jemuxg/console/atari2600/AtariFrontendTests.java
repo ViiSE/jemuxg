@@ -30,6 +30,8 @@ public final class AtariFrontendTests {
         Dimension atariSize = atari.getPreferredSize();
         check(atariSize.width == 480 && atariSize.height == 576,
                 "Atari window keeps 160x192 proportions");
+        check(!atari.getFocusTraversalKeysEnabled(),
+                "arrow keys are delivered instead of moving focus");
 
         SwingVideoSink nes = new SwingVideoSink();
         Dimension nesSize = nes.getPreferredSize();

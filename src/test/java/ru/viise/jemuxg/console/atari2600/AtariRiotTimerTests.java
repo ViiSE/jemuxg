@@ -25,6 +25,7 @@ public final class AtariRiotTimerTests {
         restart();
         saveRestore();
         absoluteAddresses();
+        intimMirrors();
         resetState();
 
         System.out.println("Atari RIOT timer tests OK, checks=" + checks);
@@ -157,6 +158,18 @@ public final class AtariRiotTimerTests {
         registers.write(0x0295, 2);
         timer.tick(1);
         check(timer.timer() == 1, "absolute TIM8T address works");
+    }
+
+    private static void intimMirrors() {
+        RiotTimer timer = new RiotTimer();
+        timer.registers().write(RiotTimer.TIM1T, 42);
+        check(timer.registers().read(0x04) == 42, "$0284 mirror reads INTIM");
+        timer.tick(2);
+        check(timer.registers().read(0x04) == 40, "$0284 mirror follows timer");
+        timer.registers().write(RiotTimer.TIM1T, 0);
+        timer.tick(1);
+        check(timer.underflow(), "$0284 test timer underflow");
+        check(timer.registers().read(0x05) == 0x80, "$0285 mirror reads INTFLG");
     }
 
     private static void resetState() {

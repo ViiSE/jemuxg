@@ -22,6 +22,7 @@ public final class AtariRiotPortsTests {
     public static void main(String[] args) {
         initialState();
         joystickDirections();
+        paddleModeFire();
         fireIsNotInSwcha();
         dataDirection();
         consoleSwitches();
@@ -51,54 +52,72 @@ public final class AtariRiotPortsTests {
         ports.connectPlayer(1, p1);
 
         p0.press(Button.UP);
-        check(ports.read(RiotPorts.SWCHA) == 0xFE, "player 0 UP clears bit 0");
+        check(ports.read(RiotPorts.SWCHA) == 0xEF, "player 0 UP clears bit 4");
         p0.release(Button.UP);
 
         p0.press(Button.DOWN);
-        check(ports.read(RiotPorts.SWCHA) == 0xFD, "player 0 DOWN clears bit 1");
+        check(ports.read(RiotPorts.SWCHA) == 0xDF, "player 0 DOWN clears bit 5");
         p0.release(Button.DOWN);
 
         p0.press(Button.LEFT);
-        check(ports.read(RiotPorts.SWCHA) == 0xFB, "player 0 LEFT clears bit 2");
+        check(ports.read(RiotPorts.SWCHA) == 0xBF, "player 0 LEFT clears bit 6");
         p0.release(Button.LEFT);
 
         p0.press(Button.RIGHT);
-        check(ports.read(RiotPorts.SWCHA) == 0xF7, "player 0 RIGHT clears bit 3");
+        check(ports.read(RiotPorts.SWCHA) == 0x7F, "player 0 RIGHT clears bit 7");
         p0.release(Button.RIGHT);
 
         p0.press(Button.UP);
         p0.press(Button.DOWN);
         p0.press(Button.LEFT);
         p0.press(Button.RIGHT);
-        check(ports.read(RiotPorts.SWCHA) == 0xF0, "all player 0 directions");
+        check(ports.read(RiotPorts.SWCHA) == 0x0F, "all player 0 directions");
         p0.releaseAll();
 
         p1.press(Button.UP);
-        check(ports.read(RiotPorts.SWCHA) == 0xEF, "player 1 UP clears bit 4");
+        check(ports.read(RiotPorts.SWCHA) == 0xFE, "player 1 UP clears bit 0");
         p1.release(Button.UP);
 
         p1.press(Button.DOWN);
-        check(ports.read(RiotPorts.SWCHA) == 0xDF, "player 1 DOWN clears bit 5");
+        check(ports.read(RiotPorts.SWCHA) == 0xFD, "player 1 DOWN clears bit 1");
         p1.release(Button.DOWN);
 
         p1.press(Button.LEFT);
-        check(ports.read(RiotPorts.SWCHA) == 0xBF, "player 1 LEFT clears bit 6");
+        check(ports.read(RiotPorts.SWCHA) == 0xFB, "player 1 LEFT clears bit 2");
         p1.release(Button.LEFT);
 
         p1.press(Button.RIGHT);
-        check(ports.read(RiotPorts.SWCHA) == 0x7F, "player 1 RIGHT clears bit 7");
+        check(ports.read(RiotPorts.SWCHA) == 0xF7, "player 1 RIGHT clears bit 3");
         p1.release(Button.RIGHT);
 
         p1.press(Button.UP);
         p1.press(Button.DOWN);
         p1.press(Button.LEFT);
         p1.press(Button.RIGHT);
-        check(ports.read(RiotPorts.SWCHA) == 0x0F, "all player 1 directions");
+        check(ports.read(RiotPorts.SWCHA) == 0xF0, "all player 1 directions");
         p1.releaseAll();
 
         p0.press(Button.UP);
         p1.press(Button.DOWN);
-        check(ports.read(RiotPorts.SWCHA) == 0xDE, "both players directions combine");
+        check(ports.read(RiotPorts.SWCHA) == 0xED, "both players directions combine");
+    }
+
+    private static void paddleModeFire() {
+        RiotPorts ports = new RiotPorts();
+        SimpleController paddle = new SimpleController();
+        paddle.setPaddleMode(true);
+        ports.connectPlayer(0, paddle);
+
+        paddle.press(Button.A);
+        check(ports.read(RiotPorts.SWCHA) == 0x7F,
+                "paddle-mode fire is visible as player 0 trigger bit");
+        paddle.release(Button.A);
+        check(ports.read(RiotPorts.SWCHA) == 0xFF,
+                "paddle-mode fire release restores SWCHA");
+        paddle.press(Button.RIGHT);
+        check(ports.read(RiotPorts.SWCHA) == 0xFF,
+                "paddle mode does not mix joystick directions into SWCHA");
+        paddle.release(Button.RIGHT);
     }
 
     private static void fireIsNotInSwcha() {
@@ -124,12 +143,12 @@ public final class AtariRiotPortsTests {
         SimpleController p0 = new SimpleController();
         ports.connectPlayer(0, p0);
         p0.press(Button.UP);
-        check(ports.read(RiotPorts.SWCHA) == 0xFA,
-                "output pin ignores joystick input");
+        check(ports.read(RiotPorts.SWCHA) == 0xEA,
+                "input high nibble sees joystick");
 
         ports.write(RiotPorts.SWACNT, 0xF0);
-        check(ports.read(RiotPorts.SWCHA) == 0x0E,
-                "port A output high nibble, joystick input low nibble");
+        check(ports.read(RiotPorts.SWCHA) == 0x0F,
+                "port A output high nibble, input low nibble unaffected");
     }
 
     private static void consoleSwitches() {
@@ -212,7 +231,7 @@ public final class AtariRiotPortsTests {
         restored.restore(new BinaryStateReader(writer.toByteArray()));
 
         check(restored.read(RiotPorts.SWACNT) == 0x0F, "restore SWACNT");
-        check(restored.read(RiotPorts.SWCHA) == 0xFA, "restore SWCHA outputs/inputs");
+        check(restored.read(RiotPorts.SWCHA) == 0xEA, "restore SWCHA outputs/inputs");
         check(restored.read(RiotPorts.SWBCNT) == 0xF0, "restore SWBCNT");
         check(restored.read(RiotPorts.SWCHB) == 0x5F, "restore SWCHB outputs/switches");
     }

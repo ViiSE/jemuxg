@@ -42,6 +42,14 @@ public interface AtariMapper extends Mapper, Stateful {
     }
 
     /**
+     * Продвигает внутренние таймеры маппера на заданное число тактов CPU.
+     * Нужно для DPC-музыки, счётчики которой тактируются независимо от
+     * обращений к регистрам.
+     */
+    default void tick(int cpuCycles) {
+    }
+
+    /**
      * @return копия RAM маппера; пустой массив, если RAM нет
      */
     default byte[] ramSnapshot() {

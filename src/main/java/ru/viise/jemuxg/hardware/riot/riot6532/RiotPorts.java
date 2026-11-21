@@ -7,6 +7,7 @@ import ru.viise.jemuxg.api.debug.StateWriter;
 import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.hardware.Button;
 import ru.viise.jemuxg.api.hardware.Controller;
+import ru.viise.jemuxg.api.hardware.PaddleController;
 import ru.viise.jemuxg.api.hardware.PanelSwitch;
 import ru.viise.jemuxg.api.hardware.SwitchPanel;
 
@@ -65,13 +66,14 @@ public final class RiotPorts implements Component, Stateful, Bus {
 
     @Override
     public int read(int address) {
-        return switch (address & REGISTER_MASK) {
+        int value = switch (address & REGISTER_MASK) {
             case SWCHA -> (outputA | (~ddrA & BYTE_MASK)) & portAInput();
             case SWACNT -> ddrA;
             case SWCHB -> (outputB | (~ddrB & BYTE_MASK)) & (switchInput() | ddrB);
             case SWBCNT -> ddrB;
             default -> 0;
         };
+        return value;
     }
 
     @Override
@@ -89,35 +91,62 @@ public final class RiotPorts implements Component, Stateful, Bus {
 
     private int portAInput() {
         int value = BYTE_MASK;
+        // Левая колонка (player 0) подключена к старшей тетраде PA4..PA7,
+        // правая (player 1) — к младшей PA0..PA3. Внутри тетрады порядок
+        // выводов джойстика: up, down, left, right.
         if (player0 != null) {
-            if (player0.pressed(Button.UP)) {
-                value &= ~0x01;
-            }
-            if (player0.pressed(Button.DOWN)) {
-                value &= ~0x02;
-            }
-            if (player0.pressed(Button.LEFT)) {
-                value &= ~0x04;
-            }
-            if (player0.pressed(Button.RIGHT)) {
-                value &= ~0x08;
+            if (paddleMode(player0)) {
+                if (triggerPressed(player0)) {
+                    value &= ~0x80;
+                }
+            } else {
+                if (player0.pressed(Button.UP)) {
+                    value &= ~0x10;
+                }
+                if (player0.pressed(Button.DOWN)) {
+                    value &= ~0x20;
+                }
+                if (player0.pressed(Button.LEFT)) {
+                    value &= ~0x40;
+                }
+                if (player0.pressed(Button.RIGHT)) {
+                    value &= ~0x80;
+                }
             }
         }
         if (player1 != null) {
-            if (player1.pressed(Button.UP)) {
-                value &= ~0x10;
-            }
-            if (player1.pressed(Button.DOWN)) {
-                value &= ~0x20;
-            }
-            if (player1.pressed(Button.LEFT)) {
-                value &= ~0x40;
-            }
-            if (player1.pressed(Button.RIGHT)) {
-                value &= ~0x80;
+            if (paddleMode(player1)) {
+                if (triggerPressed(player1)) {
+                    value &= ~0x40;
+                }
+            } else {
+                if (player1.pressed(Button.UP)) {
+                    value &= ~0x01;
+                }
+                if (player1.pressed(Button.DOWN)) {
+                    value &= ~0x02;
+                }
+                if (player1.pressed(Button.LEFT)) {
+                    value &= ~0x04;
+                }
+                if (player1.pressed(Button.RIGHT)) {
+                    value &= ~0x08;
+                }
             }
         }
         return value & BYTE_MASK;
+    }
+
+    /**
+     * Некоторые paddle-игры читают trigger с линии SWCHA: P0 — бит 7,
+     * P1 — бит 6. В обычном joystick-режиме линия не затрагивается.
+     */
+    private static boolean paddleMode(Controller controller) {
+        return controller instanceof PaddleController paddle && paddle.paddleMode();
+    }
+
+    private static boolean triggerPressed(Controller controller) {
+        return paddleMode(controller) && controller.pressed(Button.A);
     }
 
     private int switchInput() {

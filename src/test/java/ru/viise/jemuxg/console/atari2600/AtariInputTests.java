@@ -21,6 +21,7 @@ public final class AtariInputTests {
 
     public static void main(String[] args) {
         joystickKeys();
+        paddleDirection();
         consolePanelKeys();
         machineSwitches();
         System.out.println("Atari input tests OK, checks=" + checks);
@@ -45,6 +46,24 @@ public final class AtariInputTests {
 
         check(!keyboard.handleKeyPressed(KeyEvent.VK_F2),
                 "F2 is not a joystick key");
+    }
+
+    private static void paddleDirection() {
+        SimpleController controller = new SimpleController();
+        SwingKeyboardController keyboard = new SwingKeyboardController(controller);
+        controller.setPaddlePosition(500);
+
+        keyboard.handleKeyPressed(KeyEvent.VK_RIGHT);
+        keyboard.advancePaddle();
+        check(controller.paddlePosition() == 484,
+                "RIGHT arrow turns the paddle right");
+
+        keyboard.handleKeyReleased(KeyEvent.VK_RIGHT);
+        keyboard.handleKeyPressed(KeyEvent.VK_LEFT);
+        keyboard.advancePaddle();
+        check(controller.paddlePosition() == 500,
+                "LEFT arrow turns the paddle left");
+        keyboard.handleKeyReleased(KeyEvent.VK_LEFT);
     }
 
     private static void consolePanelKeys() {
@@ -123,7 +142,7 @@ public final class AtariInputTests {
         int[] code = {
                 0xAD, 0x82, 0x02,  // LDA SWCHB
                 0x85, 0x80,        // STA $80
-                0xAD, 0x3C, 0x00,  // LDA INPT4
+                0xAD, 0x0C, 0x00,  // LDA INPT4
                 0x85, 0x81,        // STA $81
                 0x4C, 0x00, 0xF0   // JMP $F000
         };

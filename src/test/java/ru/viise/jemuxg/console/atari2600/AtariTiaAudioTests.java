@@ -5,7 +5,8 @@ import ru.viise.jemuxg.api.hardware.AudioSink;
 import ru.viise.jemuxg.core.state.BinaryStateReader;
 import ru.viise.jemuxg.core.state.BinaryStateWriter;
 import ru.viise.jemuxg.hardware.audio.tia.TiaAudio;
-import ru.viise.jemuxg.hardware.video.tia.Tia;
+import ru.viise.jemuxg.hardware.video.tia.StellaTia;
+import ru.viise.jemuxg.hardware.video.tia.StellaTiaVideo;
 
 /**
  * Тесты аудиоканалов TIA.
@@ -127,12 +128,12 @@ public final class AtariTiaAudioTests {
     }
 
     private static void tiaIntegration() {
-        Tia tia = new Tia();
+        StellaTiaVideo tia = new StellaTiaVideo();
         Capture capture = new Capture();
         tia.connectAudio(capture);
-        tia.registers().write(Tia.AUDC0, 0x0C);
-        tia.registers().write(Tia.AUDF0, 0);
-        tia.registers().write(Tia.AUDV0, 0x0F);
+        tia.registers().write(StellaTia.AUDC0, 0x0C);
+        tia.registers().write(StellaTia.AUDF0, 0);
+        tia.registers().write(StellaTia.AUDV0, 0x0F);
         tia.tick(Atari2600Constants.COLOR_CLOCKS_PER_FRAME);
         check(capture.size > 0 && capture.anyNonZero(),
                 "TIA registers drive audio output");
@@ -142,9 +143,9 @@ public final class AtariTiaAudioTests {
         Atari2600Machine machine = new Atari2600Machine();
         Capture capture = new Capture();
         machine.connectAudio(capture);
-        machine.tia().registers().write(Tia.AUDC0, 0x0C);
-        machine.tia().registers().write(Tia.AUDF0, 0);
-        machine.tia().registers().write(Tia.AUDV0, 0x0F);
+        machine.tia().registers().write(StellaTia.AUDC0, 0x0C);
+        machine.tia().registers().write(StellaTia.AUDF0, 0);
+        machine.tia().registers().write(StellaTia.AUDV0, 0x0F);
         machine.runFrame();
         check(capture.size > 0 && capture.anyNonZero(),
                 "machine routes TIA audio to sink");

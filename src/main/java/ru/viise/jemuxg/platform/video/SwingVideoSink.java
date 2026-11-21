@@ -39,6 +39,9 @@ public final class SwingVideoSink extends JPanel implements VideoSink {
         setBackground(Color.BLACK);
         setOpaque(true);
         setFocusable(true);
+        // Стрелки должны приходить в KeyListener, а не тратиться на
+        // перемещение фокуса внутри Swing.
+        setFocusTraversalKeysEnabled(false);
         setPreferredSize(new Dimension(
                 frameWidth * DEFAULT_SCALE,
                 frameHeight * DEFAULT_SCALE));
@@ -46,7 +49,10 @@ public final class SwingVideoSink extends JPanel implements VideoSink {
 
     @Override
     public void frameReady(VideoFrame frame) {
-        BufferedImage next = new BufferedImage(frame.width(), frame.height(), BufferedImage.TYPE_INT_RGB);
+        // Новый неизменяемый образ на кадр: EDT может рисовать предыдущий
+        // кадр, пока поток эмуляции готовит следующий, без гонки за буфер.
+        BufferedImage next = new BufferedImage(
+                frame.width(), frame.height(), BufferedImage.TYPE_INT_RGB);
         next.setRGB(0, 0, frame.width(), frame.height(), frame.pixels(), 0, frame.width());
         image = next;
         repaint();

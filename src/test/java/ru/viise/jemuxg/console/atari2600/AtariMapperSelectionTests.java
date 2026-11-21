@@ -32,6 +32,8 @@ public final class AtariMapperSelectionTests {
         check(mapperName(rom(2048), null).equals("2K"), "auto 2K");
         check(mapperName(rom(4096), null).equals("4K"), "auto 4K");
         check(mapperName(rom(8192), null).equals("F8"), "auto 8K defaults to F8");
+        check(mapperName(rom(10240), null).equals("DPC"), "auto 10K selects DPC");
+        check(mapperName(rom(10495), null).equals("DPC"), "auto padded Pitfall selects DPC");
         check(mapperName(rom(12288), null).equals("E7"), "auto 12K selects E7");
         check(mapperName(rom(16384), null).equals("F6"), "auto 16K selects F6");
         check(mapperName(rom(32768), null).equals("F4"), "auto 32K selects F4");
@@ -72,6 +74,8 @@ public final class AtariMapperSelectionTests {
         check(mapperName(rom(8192), "e0").equals("E0"), "explicit E0");
         check(mapperName(rom(12288), "e7").equals("E7"), "explicit E7");
         check(mapperName(rom(8192), "fe").equals("FE"), "explicit FE");
+        check(mapperName(rom(10240), "dpc").equals("DPC"), "explicit DPC");
+        check(mapperName(rom(10495), "DPC").equals("DPC"), "explicit DPC padded");
         check(mapperName(rom(8192), "AUTO").equals("F8"), "explicit AUTO");
         check(mapperName(rom(8192), " F8 ").equals("F8"), "scheme is trimmed");
     }

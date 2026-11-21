@@ -61,7 +61,7 @@ public final class AtariIntegrationTests {
         check(frame.width() == 160 && frame.height() == 192, "frame is 160x192");
         check(frame.pixels()[100 * 160 + 80] == TiaPalette.ARGB[0x07],
                 "frame contains program background color");
-        check(machine.riot().ram().read(0x80) == 0xF7,
+        check(machine.riot().ram().read(0x80) == 0x7F,
                 "joystick RIGHT reaches SWCHA");
         check(audio.count() > 0, "audio samples emitted");
         check(audio.hasNonZero(), "audio is not silent");

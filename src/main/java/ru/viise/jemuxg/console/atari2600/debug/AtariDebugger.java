@@ -10,7 +10,7 @@ import ru.viise.jemuxg.api.debug.ConsoleDebugger;
 import ru.viise.jemuxg.api.debug.CpuRegisters;
 import ru.viise.jemuxg.api.debug.DebugSession;
 import ru.viise.jemuxg.console.atari2600.Atari2600Machine;
-import ru.viise.jemuxg.hardware.video.tia.Tia;
+import ru.viise.jemuxg.hardware.video.tia.StellaTia;
 
 /**
  * Отладочный снимок Atari 2600: экран, память RIOT, регистры TIA/RIOT
@@ -88,16 +88,16 @@ public final class AtariDebugger implements ConsoleDebugger {
                 snapshot.scanline(),
                 snapshot.colorClock(),
                 snapshot.wsync() ? 1 : 0,
-                tia[Tia.RESP0] & 0xFF,
-                tia[Tia.RESP1] & 0xFF,
-                tia[Tia.RESM0] & 0xFF,
-                tia[Tia.RESM1] & 0xFF,
-                tia[Tia.RESBL] & 0xFF,
-                tia[Tia.GRP0] & 0xFF,
-                tia[Tia.GRP1] & 0xFF,
-                tia[Tia.ENAM0] & 0xFF,
-                tia[Tia.ENAM1] & 0xFF,
-                tia[Tia.ENABL] & 0xFF,
+                tia[StellaTia.RESP0] & 0xFF,
+                tia[StellaTia.RESP1] & 0xFF,
+                tia[StellaTia.RESM0] & 0xFF,
+                tia[StellaTia.RESM1] & 0xFF,
+                tia[StellaTia.RESBL] & 0xFF,
+                tia[StellaTia.GRP0] & 0xFF,
+                tia[StellaTia.GRP1] & 0xFF,
+                tia[StellaTia.ENAM0] & 0xFF,
+                tia[StellaTia.ENAM1] & 0xFF,
+                tia[StellaTia.ENABL] & 0xFF,
                 riot[0x14] & 0xFF,
                 riot[0x15] & 0xFF,
                 riot[0x00] & 0xFF,

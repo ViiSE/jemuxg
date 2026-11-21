@@ -45,6 +45,13 @@ public final class Mos6507 implements Cpu, CpuDebugger {
         cpu.reset();
     }
 
+    /**
+     * @return true, если текущая инструкция завершена
+     */
+    public boolean instructionComplete() {
+        return cpu.instructionComplete();
+    }
+
     @Override
     public void tick(long cycles) {
         cpu.tick(cycles);

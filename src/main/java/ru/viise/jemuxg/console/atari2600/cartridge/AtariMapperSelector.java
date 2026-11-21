@@ -18,6 +18,8 @@ public final class AtariMapperSelector {
     private static final int TWO_KB = 2 * 1024;
     private static final int FOUR_KB = 4 * 1024;
     private static final int EIGHT_KB = 8 * 1024;
+    private static final int DPC_10K = 10 * 1024;
+    private static final int DPC_PADDED = 10_495;
     private static final int TWELVE_KB = 12 * 1024;
     private static final int SIXTEEN_KB = 16 * 1024;
     private static final int THIRTY_TWO_KB = 32 * 1024;
@@ -79,10 +81,11 @@ public final class AtariMapperSelector {
                 requireSize(size, EIGHT_KB, "FE");
                 yield new AtariFeMapper(size);
             }
+            case "dpc" -> new AtariDpcMapper(media);
             default -> throw new IllegalArgumentException(
                     "Unknown Atari 2600 mapper '" + requested
                             + "'. Supported: auto, 2k, 4k, f8, f6, f4, f8sc, f6sc, f4sc,"
-                            + " 3f, 3e, e0, e7, fe");
+                            + " 3f, 3e, e0, e7, fe, dpc");
         };
     }
 
@@ -91,6 +94,7 @@ public final class AtariMapperSelector {
         return switch (size) {
             case TWO_KB -> new AtariFixedMapper(TWO_KB);
             case FOUR_KB -> new AtariFixedMapper(FOUR_KB);
+            case DPC_10K, DPC_PADDED -> new AtariDpcMapper(media);
             case EIGHT_KB -> {
                 if (hasHint(name, "e7")) {
                     yield new AtariE7Mapper(size);
@@ -125,7 +129,7 @@ public final class AtariMapperSelector {
             default -> throw new IllegalArgumentException(
                     "Cannot auto-detect Atari 2600 mapper for " + size
                             + " bytes (" + media.name() + "). Use --mapper <scheme>;"
-                            + " schemes: 3f, 3e, e0, e7, fe, f8sc, f6sc, f4sc");
+                            + " schemes: 3f, 3e, e0, e7, fe, dpc, f8sc, f6sc, f4sc");
         };
     }
 

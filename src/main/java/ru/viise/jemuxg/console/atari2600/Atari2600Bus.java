@@ -1,5 +1,7 @@
 package ru.viise.jemuxg.console.atari2600;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import ru.viise.jemuxg.api.hardware.Bus;
 import ru.viise.jemuxg.api.hardware.Memory;
@@ -22,12 +24,21 @@ public final class Atari2600Bus implements Bus {
     private final Memory riotRam;
     private final Bus riotRegisters;
     private final Bus cartridge;
+    private final boolean deferGraphicsWrites;
+    private final List<int[]> pendingWrites = new ArrayList<>();
 
     public Atari2600Bus(Bus tia, Memory riotRam, Bus riotRegisters, Bus cartridge) {
+        this(tia, riotRam, riotRegisters, cartridge, false);
+    }
+
+    public Atari2600Bus(
+            Bus tia, Memory riotRam, Bus riotRegisters, Bus cartridge,
+            boolean deferGraphicsWrites) {
         this.tia = Objects.requireNonNull(tia, "tia");
         this.riotRam = Objects.requireNonNull(riotRam, "riotRam");
         this.riotRegisters = Objects.requireNonNull(riotRegisters, "riotRegisters");
         this.cartridge = Objects.requireNonNull(cartridge, "cartridge");
+        this.deferGraphicsWrites = deferGraphicsWrites;
         if (riotRam.size() != Atari2600Constants.RIOT_RAM_SIZE) {
             throw new IllegalArgumentException(
                     "RIOT RAM must be " + Atari2600Constants.RIOT_RAM_SIZE
@@ -69,7 +80,11 @@ public final class Atari2600Bus implements Bus {
 
         if (address13 <= Atari2600Constants.TIA_MIRROR_END) {
             int register = address13 & Atari2600Constants.TIA_ADDRESS_MASK;
-            tia.write(register, value);
+            if (deferGraphicsWrites && register >= 0x04 && register <= 0x2B) {
+                pendingWrites.add(new int[] {register, value & 0xFF});
+            } else {
+                tia.write(register, value);
+            }
             // 3F/3E используют записи в страницу TIA как hotspots.
             cartridge.write(register, value);
             return;
@@ -92,5 +107,15 @@ public final class Atari2600Bus implements Bus {
         if (address13 >= Atari2600Constants.CARTRIDGE_BASE) {
             cartridge.write(address13, value);
         }
+    }
+
+    /**
+     * Применяет отложенные графические записи TIA в конце инструкции CPU.
+     */
+    public void flushPendingWrites() {
+        for (int[] write : pendingWrites) {
+            tia.write(write[0], write[1]);
+        }
+        pendingWrites.clear();
     }
 }
