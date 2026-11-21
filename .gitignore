@@ -16,6 +16,9 @@ target/
 # .a26 files
 /*.a26
 
+# .sg files
+/*.sg
+
 # .idea files
 .idea/
 

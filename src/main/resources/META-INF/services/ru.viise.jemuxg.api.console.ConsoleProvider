@@ -1,2 +1,3 @@
 ru.viise.jemuxg.console.nes.NesProvider
 ru.viise.jemuxg.console.atari2600.Atari2600Provider
+ru.viise.jemuxg.console.sg1000.Sg1000Provider

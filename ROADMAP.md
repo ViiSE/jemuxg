@@ -1,4 +1,4 @@
-t# Roadmap: консоли jemuxg
+# Roadmap: консоли jemuxg
 
 Цель — эмуляция консолей от самых простых к самым сложным, максимум до
 поколения PlayStation 1 включительно.
@@ -8,6 +8,8 @@ t# Roadmap: консоли jemuxg
 - [x] **NES** — 6502 (Ricoh 2A03), PPU 2C02, APU, мапперы, save/restore.
 - [x] **Atari 2600** — 6507, RIOT 6532, TIA (цикл-точный порт Stella),
   мапперы, аналоговые paddle, save/restore.
+- [x] **Sega SG-1000** — Z80, TMS9918A, SN76489, ввод, save/restore,
+  отладка; запуск проверен на Bomb Jack и H.E.R.O.
 
 ## Принципы приоритезации
 
@@ -178,10 +180,20 @@ N64 — RSP/RDP с микрокодом, то есть фактически ну
 
 Подробный план: [todos/TODO-SG-1000.md](todos/TODO-SG-1000.md).
 
-- [ ] Z80-ядро + тесты.
-- [ ] TMS9918A: текстовый режим, graphics I/II, sprites, collision.
-- [ ] SN76489: 3 тона + шум, таблица громкости.
-- [ ] Sega SG-1000: картриджи, джойстики, видео и звук.
+- [x] Каркас SG-1000: провайдер, слот, 256×192, `.sg`/`.sc`.
+- [x] Z80-ядро + тесты.
+- [x] Память и картриджи SG-1000: ROM `$0000–$BFFF`, RAM 1 КБ с
+      зеркалами, 8/16/24/32/48 КБ и Sega My Card.
+- [x] TMS9918A: текстовый режим, graphics I/II, multicolor, sprites,
+      collision, VBlank IRQ и save/restore.
+- [x] SN76489: 3 тона + шум, таблица громкости, LFSR, save/restore.
+- [x] Ввод SG-1000: P1/P2 через `$DC/$DD`, зеркала, активный низкий уровень, Reset.
+- [x] Машина SG-1000: кадр 262×228 тактов, VDP 342 точки/строку,
+      VBlank IRQ, save/restore с восстановлением посреди кадра.
+- [x] Отладка SG-1000: `Sg1000Debugger`, RAM/VRAM/VDP/PSG,
+      framebuffer и F12-снимок.
+- [x] Sega SG-1000: полная интеграция, save/restore, отладка и запуск
+      игр (Bomb Jack, H.E.R.O.; остальные требуют ROM).
 - [ ] ColecoVision: BIOS, кейпад, спиннер, save/restore.
 
 ### Этап 2. Портативные и Sega (ориентир: 1–2 месяца)

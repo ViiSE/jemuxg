@@ -19,6 +19,17 @@ import ru.viise.jemuxg.console.atari2600.AtariRiotTimerTests;
 import ru.viise.jemuxg.console.atari2600.AtariStateTests;
 import ru.viise.jemuxg.console.atari2600.AtariTiaAudioTests;
 import ru.viise.jemuxg.console.atari2600.AtariTiaTests;
+import ru.viise.jemuxg.console.sg1000.Sg1000DebuggerTests;
+import ru.viise.jemuxg.console.sg1000.Sg1000FrameworkTests;
+import ru.viise.jemuxg.console.sg1000.Sg1000InputTests;
+import ru.viise.jemuxg.console.sg1000.Sg1000IntegrationTests;
+import ru.viise.jemuxg.console.sg1000.Sg1000MemoryTests;
+import ru.viise.jemuxg.console.sg1000.Sg1000RomTests;
+import ru.viise.jemuxg.console.sg1000.Sg1000StateTests;
+import ru.viise.jemuxg.hardware.audio.sn76489.Sn76489Tests;
+import ru.viise.jemuxg.hardware.cpu.z80.Z80Tests;
+import ru.viise.jemuxg.hardware.cpu.z80.Z80ZexTests;
+import ru.viise.jemuxg.hardware.video.tms9918.Tms9918Tests;
 
 /**
  * Запуск всех контрактных тестов и тестовых ROM одной командой.
@@ -62,6 +73,17 @@ public final class AllTests {
         ru.viise.jemuxg.console.atari2600.StellaTiaTests.main(args);
         AtariTiaTests.main(args);
         AtariTiaAudioTests.main(args);
+        Z80Tests.main(args);
+        Z80ZexTests.main(args);
+        Sg1000FrameworkTests.main(args);
+        Sg1000MemoryTests.main(args);
+        Tms9918Tests.main(args);
+        Sn76489Tests.main(args);
+        Sg1000InputTests.main(args);
+        Sg1000StateTests.main(args);
+        Sg1000DebuggerTests.main(args);
+        Sg1000IntegrationTests.main(args);
+        Sg1000RomTests.main(args);
         System.out.println("All jemuxg tests OK");
     }
 }

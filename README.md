@@ -2,7 +2,9 @@
 
 # jemuxg
 
-Эмулятор старых консолей. Реализованы NES и Atari 2600.
+Эмулятор старых консолей. Реализованы NES, Atari 2600 и Sega SG-1000.
+Для SG-1000 поддерживаются NTSC-картриджи `.sg`/`.sc`; запуск проверен
+на Bomb Jack и H.E.R.O.
 
 ## Сборка
 
@@ -21,11 +23,12 @@ java -cp target/classes ru.viise.jemuxg.app.Main
 ```
 
 Можно передать ROM сразу. Консоль определяется по расширению:
-`.nes` → NES, `.a26` → Atari 2600.
+`.nes` → NES, `.a26` → Atari 2600, `.sg`/`.sc` → Sega SG-1000.
 
 ```bash
 java -cp target/classes ru.viise.jemuxg.app.Main game.nes
 java -cp target/classes ru.viise.jemuxg.app.Main game.a26
+java -cp target/classes ru.viise.jemuxg.app.Main game.sg
 # или
 java -cp target/classes ru.viise.jemuxg.app.Main --rom game.nes
 ```
@@ -34,6 +37,7 @@ java -cp target/classes ru.viise.jemuxg.app.Main --rom game.nes
 
 ```bash
 java -cp target/classes ru.viise.jemuxg.app.Main --console atari2600 game.bin
+java -cp target/classes ru.viise.jemuxg.app.Main --console sg1000 game.bin
 ```
 
 Схему картриджа Atari 2600 можно задать явно:
@@ -65,7 +69,7 @@ java -Djava.awt.headless=true -cp target/classes ru.viise.jemuxg.app.Main --smok
 | Enter | Start |
 | Shift / Backspace | Select |
 | Мышь / трекпад | Atari 2600: paddle; ЛКМ — fire и перетаскивание paddle |
-| F2 | Atari 2600: Reset |
+| F2 | Atari 2600 и SG-1000: Reset |
 | F3 | Atari 2600: Select |
 | F4 | Atari 2600: Color/B&W |
 | F10 | Пауза / режим шага по кадрам |
@@ -76,8 +80,8 @@ java -Djava.awt.headless=true -cp target/classes ru.viise.jemuxg.app.Main --smok
 эмулятор продолжает работать без звука.
 
 Окно открывается в трёхкратном размере кадра консоли: NES — 768×720,
-Atari 2600 — 480×576. При изменении размера окна картинка масштабируется
-с сохранением пропорций.
+Atari 2600 — 480×576, Sega SG-1000 — 768×576. При изменении размера окна
+картинка масштабируется с сохранением пропорций.
 
 ## Тесты
 
@@ -110,6 +114,13 @@ java -cp target/classes:target/test-classes \
 - Atari reference ROM: сравнение кадров `colors` и `score-mode` из
   missingno-vcs-tests с эталонными PNG Stella. Эталоны лежат в
   `src/test/resources/test-roms/atari/`.
+- SG-1000: каркас, карта памяти и картриджи, Z80, TMS9918A (Graphics
+  I/II, Multicolor, Text, спрайты, IRQ, save/restore), SN76489
+  (три тона, шум, громкость, save/restore), ввод P1/P2/Reset,
+  save/restore машины, отладочные снимки, синтетический интеграционный
+  тест и опциональный smoke реальных ROM.
+- Z80: набор команд, флаги, такты, прерывания, все префиксы и
+  опциональный харнесс для zexdoc/zexall.
 
 ## Atari 2600
 
@@ -127,6 +138,38 @@ Stella: задержки регистров, playfield/player/missile/ball, VDEL
 - CPU 6507 не является полностью цикл-точным на уровне отдельных тактов;
 - save/restore доступен через API `Stateful`, но в UI пока нет хоткея
   сохранения/загрузки.
+
+## Sega SG-1000
+
+Каркас консоли: провайдер `sg1000`, слот картриджа 8–48 КБ, видео
+256×192 и звуковой выход 44,1 кГц. Ядро Z80 готово: документированные
+команды, префиксы CB/ED/DD/FD/DDCB/FDCB, флаги, такты, прерывания и
+тесты всех групп команд. Z80 подключён к карте памяти: ROM
+`$0000–$BFFF`, RAM 1 КБ в `$C000–$C3FF` с зеркалами до `$FFFF`,
+картриджи 8/16/24/32/48 КБ и Sega My Card.
+
+Видеоядро TMS9918A готово: 16 КБ VRAM, порты `$BE/$BF` с зеркалами,
+режимы Graphics I/II, Multicolor и Text, 32 спрайта с увеличением,
+early clock, флагом 5-го спрайта и коллизиями, VBlank IRQ и палитра
+TMS9918. Машина выполняет по 228 тактов CPU на строку и отдаёт кадр
+256×192. Звук — SN76489AN: три тональных канала, шум, 15-битный LFSR,
+нелинейная громкость и микширование в 44,1 кГц. Ввод готов: джойстики
+P1/P2 через `$DC/$DD` с зеркалами, активный низкий уровень и Reset через
+F2. Машина поддерживает полный save/restore (Z80, RAM, VDP, PSG, позиция
+внутри кадра, счётчики и картридж), поэтому F10/↑/↓ работают и для SG-1000.
+F12 сохраняет отладочный снимок с Z80/VDP/PSG, RAM, VRAM и framebuffer в
+`debug/<rom>/frame-N/`. Запуск проверен на Bomb Jack и H.E.R.O.; другие
+игры требуют ROM и отдельной проверки. Подробный план — `todos/TODO-SG-1000.md`.
+
+Ограничения SG-1000:
+
+- только NTSC, без PAL/SECAM;
+- нет SC-3000 (клавиатура, BASIC), кассет и расширений RAM;
+- дампы 40 КБ не поддерживаются;
+- тайминги доступа к VRAM 8/2 мкс не блокируют CPU;
+- save/restore проверяет картридж по размеру и имени, не по хэшу;
+- эталонные скриншоты автоматизированы только для синтетического ROM и
+  smoke-тестов Bomb Jack/H.E.R.O.
 
 ## Отладка
 

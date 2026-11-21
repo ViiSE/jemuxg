@@ -129,6 +129,9 @@ public final class Main {
         if (name.endsWith(".a26")) {
             return "atari2600";
         }
+        if (name.endsWith(".sg") || name.endsWith(".sc")) {
+            return "sg1000";
+        }
         throw new IllegalArgumentException(
                 "Не удалось определить консоль по расширению файла: " + rom.getFileName());
     }
@@ -141,8 +144,11 @@ public final class Main {
                 "Atari 2600 (*.a26)", "a26"));
         chooser.addChoosableFileFilter(new FileNameExtensionFilter(
                 "NES (*.nes)", "nes"));
+        chooser.addChoosableFileFilter(new FileNameExtensionFilter(
+                "Sega SG-1000 (*.sg, *.sc)", "sg", "sc"));
         chooser.setFileFilter(new FileNameExtensionFilter(
-                "Все поддерживаемые ROM (*.nes, *.a26)", "nes", "a26"));
+                "Все поддерживаемые ROM (*.nes, *.a26, *.sg, *.sc)",
+                "nes", "a26", "sg", "sc"));
         if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
             return null;
         }
@@ -152,13 +158,15 @@ public final class Main {
     private static void usage() {
         System.out.println("""
                 Использование:
-                  java -cp target/classes ru.viise.jemuxg.app.Main [rom.nes|rom.a26]
+                  java -cp target/classes ru.viise.jemuxg.app.Main [rom.nes|rom.a26|rom.sg|rom.sc]
                   java -cp target/classes ru.viise.jemuxg.app.Main --rom <rom> [--console <id>] [--mapper <scheme>]
                   java -cp target/classes ru.viise.jemuxg.app.Main --console <id> <rom> [--mapper <scheme>]
                   java -cp target/classes ru.viise.jemuxg.app.Main --smoke
 
-                Консоль определяется по расширению: .nes -> nes, .a26 -> atari2600.
-                Для неоднозначных файлов используйте --console <id>.
+                Консоль определяется по расширению: .nes -> nes, .a26 -> atari2600,
+                .sg/.sc -> sg1000. Для неоднозначных файлов (.bin) используйте
+                --console <id>, например:
+                  java -cp target/classes ru.viise.jemuxg.app.Main --console sg1000 game.bin
                 Схема картриджа Atari 2600 задаётся через --mapper:
                   auto (по умолчанию), 2k, 4k, f8, f6, f4, f8sc, f6sc, f4sc,
                   3f, 3e, e0, e7, fe.
