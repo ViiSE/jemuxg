@@ -1,3 +1,5 @@
+[![build](https://github.com/ViiSE/jemuxg/actions/workflows/build.yml/badge.svg)](https://github.com/ViiSE/jemuxg/actions/workflows/build.yml)
+
 <img src="static/jemuxg_logo2.png" width="256" height="256">
 
 # jemuxg
